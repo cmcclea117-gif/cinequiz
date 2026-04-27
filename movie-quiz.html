@@ -2200,6 +2200,12 @@ window.downloadResultsCard = async function() {
   ctx.fillText(`${pct}%`, W / 2, y + 76);
   y += 96;
 
+  // Watermark — bottom right corner
+  ctx.textAlign = "right";
+  ctx.fillStyle = isLight ? "rgba(0,0,0,0.2)" : "rgba(255,255,255,0.15)";
+  ctx.font = `500 13px 'DM Sans', sans-serif`;
+  ctx.fillText("🎬 cinequiz.app", W - PADDING, H - PADDING + 4);
+
   // Download
   const link = document.createElement("a");
   link.download = `cinequiz-results-${name ?? "quiz"}.png`;
