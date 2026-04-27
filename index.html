@@ -1,0 +1,837 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CineQuiz — Know Your Friend</title>
+<meta name="description" content="Build personalized quizzes about movies, TV shows, video games, and music. Share with friends. Find out who really knows you.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,300&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:       #0d0d0f;
+    --surface:  #16161a;
+    --surface2: #1f1f26;
+    --border:   #2a2a35;
+    --gold:     #c9a84c;
+    --gold-dim: #7a6228;
+    --cream:    #f0e8d4;
+    --muted:    #6b6b80;
+    --radius:   10px;
+    --font-display: 'DM Serif Display', Georgia, serif;
+    --font-body:    'DM Sans', sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--cream);
+    font-family: var(--font-body);
+    font-size: 15px;
+    line-height: 1.6;
+    overflow-x: hidden;
+  }
+
+  /* Film grain overlay */
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.5;
+  }
+
+  /* ── NAV ── */
+  nav {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 40px;
+    background: rgba(13, 13, 15, 0.85);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .nav-logo {
+    font-family: var(--font-display);
+    font-size: 1.3rem;
+    font-style: italic;
+    color: var(--cream);
+    text-decoration: none;
+  }
+
+  .nav-logo span { color: var(--gold); }
+
+  .nav-cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 18px;
+    background: var(--gold);
+    color: #0d0d0f;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: background 0.15s;
+  }
+
+  .nav-cta:hover { background: #d4b05e; }
+
+  /* ── HERO ── */
+  .hero {
+    position: relative;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 120px 24px 80px;
+    z-index: 1;
+  }
+
+  .hero-eyebrow {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 20px;
+    opacity: 0;
+    animation: fadeUp 0.8s ease 0.2s forwards;
+  }
+
+  .hero-title {
+    font-family: var(--font-display);
+    font-size: clamp(3rem, 10vw, 7rem);
+    font-style: italic;
+    line-height: 1;
+    color: var(--cream);
+    margin-bottom: 24px;
+    opacity: 0;
+    animation: fadeUp 0.8s ease 0.4s forwards;
+  }
+
+  .hero-title span { color: var(--gold); }
+
+  .hero-sub {
+    font-size: clamp(1rem, 2.5vw, 1.2rem);
+    color: var(--muted);
+    font-weight: 300;
+    max-width: 560px;
+    margin: 0 auto 40px;
+    line-height: 1.7;
+    opacity: 0;
+    animation: fadeUp 0.8s ease 0.6s forwards;
+  }
+
+  .hero-buttons {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    justify-content: center;
+    opacity: 0;
+    animation: fadeUp 0.8s ease 0.8s forwards;
+  }
+
+  .btn-primary {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 14px 28px;
+    background: var(--gold);
+    color: #0d0d0f;
+    border-radius: 8px;
+    font-size: 15px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.15s;
+  }
+
+  .btn-primary:hover {
+    background: #d4b05e;
+    transform: translateY(-1px);
+  }
+
+  .btn-secondary {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 14px 28px;
+    background: transparent;
+    color: var(--cream);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 15px;
+    font-weight: 500;
+    text-decoration: none;
+    transition: all 0.15s;
+  }
+
+  .btn-secondary:hover {
+    border-color: var(--gold-dim);
+    color: var(--gold);
+    transform: translateY(-1px);
+  }
+
+  /* Floating quiz cards */
+  .hero-cards {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    overflow: hidden;
+  }
+
+  .float-card {
+    position: absolute;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 16px;
+    font-size: 12px;
+    color: var(--muted);
+    white-space: nowrap;
+    opacity: 0;
+    animation: floatIn 1s ease forwards;
+  }
+
+  .float-card strong { color: var(--cream); display: block; font-size: 13px; }
+  .float-card span { color: var(--gold); font-size: 11px; }
+
+  .float-card:nth-child(1) { top: 22%; left: 5%; animation-delay: 1.2s; transform: rotate(-3deg); }
+  .float-card:nth-child(2) { top: 35%; right: 4%; animation-delay: 1.5s; transform: rotate(2deg); }
+  .float-card:nth-child(3) { bottom: 28%; left: 6%; animation-delay: 1.8s; transform: rotate(1deg); }
+  .float-card:nth-child(4) { bottom: 22%; right: 5%; animation-delay: 2.1s; transform: rotate(-2deg); }
+
+  @media (max-width: 768px) { .float-card { display: none; } }
+
+  /* ── SECTIONS ── */
+  section {
+    position: relative;
+    z-index: 1;
+    padding: 100px 24px;
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+
+  .section-eyebrow {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 12px;
+    text-align: center;
+  }
+
+  .section-title {
+    font-family: var(--font-display);
+    font-size: clamp(1.8rem, 4vw, 3rem);
+    font-style: italic;
+    color: var(--cream);
+    text-align: center;
+    margin-bottom: 16px;
+  }
+
+  .section-sub {
+    text-align: center;
+    color: var(--muted);
+    font-weight: 300;
+    max-width: 520px;
+    margin: 0 auto 60px;
+    line-height: 1.7;
+  }
+
+  /* ── HOW IT WORKS ── */
+  .steps {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 24px;
+  }
+
+  .step {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 32px 28px;
+    position: relative;
+    transition: border-color 0.2s;
+  }
+
+  .step:hover { border-color: var(--gold-dim); }
+
+  .step-number {
+    font-family: var(--font-display);
+    font-size: 3rem;
+    font-style: italic;
+    color: var(--gold);
+    opacity: 0.3;
+    line-height: 1;
+    margin-bottom: 16px;
+  }
+
+  .step-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--cream);
+    margin-bottom: 8px;
+  }
+
+  .step-desc {
+    font-size: 13px;
+    color: var(--muted);
+    line-height: 1.6;
+    font-weight: 300;
+  }
+
+  /* ── QUIZ TYPES ── */
+  .quiz-types {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 16px;
+  }
+
+  .quiz-type {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 28px 24px;
+    transition: all 0.2s;
+    cursor: default;
+  }
+
+  .quiz-type:hover {
+    border-color: var(--gold-dim);
+    transform: translateY(-3px);
+    background: var(--surface2);
+  }
+
+  .quiz-type-emoji {
+    font-size: 2.5rem;
+    margin-bottom: 12px;
+    display: block;
+  }
+
+  .quiz-type-name {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--cream);
+    margin-bottom: 8px;
+  }
+
+  .quiz-type-count {
+    font-size: 12px;
+    color: var(--gold-dim);
+    margin-bottom: 12px;
+    font-weight: 500;
+  }
+
+  .quiz-type-examples {
+    font-size: 12px;
+    color: var(--muted);
+    line-height: 1.8;
+    font-weight: 300;
+  }
+
+  /* ── SAMPLE CARD SECTION ── */
+  .card-preview {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 40px;
+    max-width: 700px;
+    margin: 0 auto;
+    text-align: center;
+  }
+
+  .card-preview-eyebrow {
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 8px;
+    font-weight: 600;
+  }
+
+  .card-preview-title {
+    font-family: var(--font-display);
+    font-size: 1.5rem;
+    font-style: italic;
+    color: var(--cream);
+    margin-bottom: 28px;
+  }
+
+  .card-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 8px;
+    margin-bottom: 28px;
+  }
+
+  .card-img {
+    aspect-ratio: 1;
+    border-radius: 8px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+  }
+
+  .card-img.correct::after {
+    content: '✓';
+    position: absolute;
+    top: 4px; right: 4px;
+    background: rgba(76,175,106,0.9);
+    color: #fff;
+    border-radius: 50%;
+    width: 18px; height: 18px;
+    font-size: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+  }
+
+  .card-img.incorrect::after {
+    content: '✕';
+    position: absolute;
+    top: 4px; right: 4px;
+    background: rgba(201,76,76,0.9);
+    color: #fff;
+    border-radius: 50%;
+    width: 18px; height: 18px;
+    font-size: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+  }
+
+  .card-score {
+    display: flex;
+    align-items: baseline;
+    justify-content: center;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+
+  .card-score-num {
+    font-family: var(--font-display);
+    font-size: 3.5rem;
+    color: var(--gold);
+    line-height: 1;
+  }
+
+  .card-score-total {
+    font-size: 1.2rem;
+    color: var(--muted);
+  }
+
+  .card-score-pct {
+    font-size: 14px;
+    color: var(--muted);
+    margin-bottom: 16px;
+  }
+
+  .card-watermark {
+    font-size: 11px;
+    color: rgba(255,255,255,0.2);
+    text-align: right;
+  }
+
+  /* ── DIVIDER ── */
+  .divider-line {
+    height: 1px;
+    background: var(--border);
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+
+  /* ── REQUEST ACCESS SECTION ── */
+  .access-section {
+    text-align: center;
+    padding: 100px 24px;
+    position: relative;
+    z-index: 1;
+  }
+
+  .access-card {
+    background: var(--surface);
+    border: 1px solid var(--gold-dim);
+    border-radius: 16px;
+    padding: 56px 40px;
+    max-width: 520px;
+    margin: 0 auto;
+  }
+
+  .access-form {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 32px;
+  }
+
+  .access-input {
+    padding: 12px 16px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--cream);
+    font-family: var(--font-body);
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+
+  .access-input:focus { border-color: var(--gold-dim); }
+  .access-input::placeholder { color: var(--muted); }
+
+  .access-btn {
+    padding: 13px;
+    background: var(--gold);
+    color: #0d0d0f;
+    border: none;
+    border-radius: 8px;
+    font-family: var(--font-body);
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+
+  .access-btn:hover { background: #d4b05e; }
+  .access-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  .access-msg {
+    font-size: 13px;
+    display: none;
+    margin-top: 4px;
+  }
+
+  .access-msg.show { display: block; }
+  .access-msg.success { color: #88cc88; }
+  .access-msg.error { color: #e88888; }
+
+  /* ── FOOTER ── */
+  footer {
+    position: relative;
+    z-index: 1;
+    border-top: 1px solid var(--border);
+    padding: 32px 40px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+
+  .footer-logo {
+    font-family: var(--font-display);
+    font-style: italic;
+    color: var(--muted);
+    font-size: 1rem;
+    text-decoration: none;
+  }
+
+  .footer-logo span { color: var(--gold-dim); }
+
+  .footer-links {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+  }
+
+  .footer-links a {
+    font-size: 12px;
+    color: var(--muted);
+    text-decoration: none;
+    transition: color 0.15s;
+  }
+
+  .footer-links a:hover { color: var(--gold); }
+
+  /* ── ANIMATIONS ── */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes floatIn {
+    from { opacity: 0; transform: translateY(10px) rotate(var(--r, 0deg)); }
+    to   { opacity: 1; transform: translateY(0) rotate(var(--r, 0deg)); }
+  }
+
+  /* scroll reveal */
+  .reveal {
+    opacity: 0;
+    transform: translateY(24px);
+    transition: opacity 0.7s ease, transform 0.7s ease;
+  }
+
+  .reveal.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a href="/" class="nav-logo">Cine<span>Quiz</span></a>
+  <a href="movie-quiz.html" class="nav-cta">🎬 Create a Quiz</a>
+</nav>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-cards">
+    <div class="float-card">
+      <strong>What is my favorite movie?</strong>
+      <span>🎬 Movies · Question 1</span>
+    </div>
+    <div class="float-card">
+      <strong>Which artist is my guilty pleasure?</strong>
+      <span>🎵 Music · Question 14</span>
+    </div>
+    <div class="float-card">
+      <strong>Which game do I think is overrated?</strong>
+      <span>🎮 Video Games · Question 8</span>
+    </div>
+    <div class="float-card">
+      <strong>What's my favorite TV villain?</strong>
+      <span>📺 TV Shows · Question 5</span>
+    </div>
+  </div>
+
+  <div class="hero-eyebrow">★ Know Your Friend ★</div>
+  <h1 class="hero-title">Cine<span>Quiz</span></h1>
+  <p class="hero-sub">Build a personalized quiz about your taste in movies, TV, games, and music. Share it with friends. Find out who really knows you.</p>
+  <div class="hero-buttons">
+    <a href="movie-quiz.html" class="btn-primary">✨ Create Your Quiz</a>
+    <a href="#how-it-works" class="btn-secondary">See How It Works</a>
+  </div>
+</div>
+
+<div class="divider-line"></div>
+
+<!-- HOW IT WORKS -->
+<section id="how-it-works">
+  <div class="section-eyebrow reveal">How It Works</div>
+  <h2 class="section-title reveal">Three steps to quiz your friends</h2>
+  <p class="section-sub reveal">No accounts needed to take a quiz. Just share the link and let the fun begin.</p>
+
+  <div class="steps">
+    <div class="step reveal">
+      <div class="step-number">01</div>
+      <div class="step-title">Pick a topic & fill in your answers</div>
+      <div class="step-desc">Choose from Movies, TV Shows, Video Games, or Music. Answer questions about your favorites — the AI generates the wrong answers automatically.</div>
+    </div>
+    <div class="step reveal">
+      <div class="step-number">02</div>
+      <div class="step-title">Publish & get a share link</div>
+      <div class="step-desc">One click publishes your quiz and generates a shareable link. Send it to your friends via text, DM, or wherever you hang out.</div>
+    </div>
+    <div class="step reveal">
+      <div class="step-number">03</div>
+      <div class="step-title">See who really knows you</div>
+      <div class="step-desc">Friends take the quiz, get their score, and download a shareable results card. Scores get shared, debates get started.</div>
+    </div>
+  </div>
+</section>
+
+<div class="divider-line"></div>
+
+<!-- QUIZ TYPES -->
+<section id="quiz-types">
+  <div class="section-eyebrow reveal">Quiz Types</div>
+  <h2 class="section-title reveal">Pick your passion</h2>
+  <p class="section-sub reveal">Each quiz type has its own hand-crafted question set designed to reveal what you truly love.</p>
+
+  <div class="quiz-types">
+    <div class="quiz-type reveal">
+      <span class="quiz-type-emoji">🎬</span>
+      <div class="quiz-type-name">Movies</div>
+      <div class="quiz-type-count">51 questions</div>
+      <div class="quiz-type-examples">
+        Favorite director<br>
+        Best guilty pleasure<br>
+        Movie you'd never turn off<br>
+        Best foreign language film
+      </div>
+    </div>
+    <div class="quiz-type reveal">
+      <span class="quiz-type-emoji">📺</span>
+      <div class="quiz-type-name">TV Shows</div>
+      <div class="quiz-type-count">20 questions</div>
+      <div class="quiz-type-examples">
+        Favorite series finale<br>
+        Most underrated show<br>
+        Cancelled too soon<br>
+        Best theme song
+      </div>
+    </div>
+    <div class="quiz-type reveal">
+      <span class="quiz-type-emoji">🎮</span>
+      <div class="quiz-type-name">Video Games</div>
+      <div class="quiz-type-count">20 questions</div>
+      <div class="quiz-type-examples">
+        Game with best story<br>
+        Most nostalgic childhood game<br>
+        Needs a remake<br>
+        Best multiplayer
+      </div>
+    </div>
+    <div class="quiz-type reveal">
+      <span class="quiz-type-emoji">🎵</span>
+      <div class="quiz-type-name">Music</div>
+      <div class="quiz-type-count">24 questions</div>
+      <div class="quiz-type-examples">
+        Favorite album of all time<br>
+        Album with no skips<br>
+        Criminally overlooked album<br>
+        Favorite childhood artist
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider-line"></div>
+
+<!-- RESULTS CARD PREVIEW -->
+<section id="results">
+  <div class="section-eyebrow reveal">Results Card</div>
+  <h2 class="section-title reveal">Share your score</h2>
+  <p class="section-sub reveal">After taking a quiz, download a beautiful results card to share on social media or with the quiz creator.</p>
+
+  <div class="card-preview reveal">
+    <div class="card-preview-eyebrow">★ KNOW YOUR FRIEND ★</div>
+    <div class="card-preview-title">How well do you know Chris?</div>
+    <div class="card-grid">
+      <div class="card-img correct">🎬</div>
+      <div class="card-img incorrect">🎵</div>
+      <div class="card-img correct">🎮</div>
+      <div class="card-img incorrect">📺</div>
+      <div class="card-img correct">🎬</div>
+      <div class="card-img incorrect">🎵</div>
+      <div class="card-img correct">🎬</div>
+      <div class="card-img incorrect">🎮</div>
+      <div class="card-img correct">📺</div>
+      <div class="card-img correct">🎬</div>
+    </div>
+    <div class="card-score">
+      <div class="card-score-num">7</div>
+      <div class="card-score-total">/ 10</div>
+    </div>
+    <div class="card-score-pct">70%</div>
+    <div class="card-watermark">🎬 cinequiz.app</div>
+  </div>
+</section>
+
+<div class="divider-line"></div>
+
+<!-- REQUEST ACCESS -->
+<div class="access-section" id="request-access">
+  <div class="section-eyebrow reveal">Get Started</div>
+  <h2 class="section-title reveal">Ready to build your quiz?</h2>
+  <p class="section-sub reveal">Quiz taking is open to everyone. To create your own quiz, request access below.</p>
+
+  <div class="access-card reveal">
+    <div style="font-size:11px;letter-spacing:0.15em;text-transform:uppercase;color:var(--gold-dim);font-weight:600;margin-bottom:8px;">Request Creator Access</div>
+    <div style="font-family:var(--font-display);font-size:1.4rem;font-style:italic;color:var(--cream);">Join the <span style="color:var(--gold);">CineQuiz</span> community</div>
+    <div class="access-form">
+      <input class="access-input" id="landingName" placeholder="Your name" autocomplete="off">
+      <input class="access-input" id="landingEmail" placeholder="Your email address" type="email" autocomplete="off">
+      <button class="access-btn" onclick="submitLandingRequest()">Request Access</button>
+      <div class="access-msg" id="landingMsg"></div>
+    </div>
+    <div style="font-size:12px;color:var(--muted);margin-top:16px;line-height:1.6;">
+      Already have a quiz link? <a href="movie-quiz.html" style="color:var(--gold-dim);text-decoration:none;">Open it here →</a>
+    </div>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <a href="/" class="footer-logo">Cine<span>Quiz</span></a>
+  <div class="footer-links">
+    <a href="https://www.themoviedb.org/" target="_blank" rel="noopener">TMDB</a>
+    <a href="https://rawg.io/" target="_blank" rel="noopener">RAWG</a>
+    <a href="https://www.last.fm/" target="_blank" rel="noopener">Last.fm</a>
+    <a href="https://workers.cloudflare.com/" target="_blank" rel="noopener">Cloudflare AI</a>
+    <a href="https://resend.com/" target="_blank" rel="noopener">Resend</a>
+  </div>
+</footer>
+
+<script>
+  const WORKER_URL = "https://quiz-ai.cmcclea117.workers.dev";
+
+  // Scroll reveal
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        e.target.classList.add("visible");
+        observer.unobserve(e.target);
+      }
+    });
+  }, { threshold: 0.1 });
+
+  document.querySelectorAll(".reveal").forEach(el => observer.observe(el));
+
+  // Stagger steps and cards
+  document.querySelectorAll(".step, .quiz-type").forEach((el, i) => {
+    el.style.transitionDelay = `${i * 0.1}s`;
+  });
+
+  // Access request
+  window.submitLandingRequest = async function() {
+    const name  = document.getElementById("landingName").value.trim();
+    const email = document.getElementById("landingEmail").value.trim();
+    const msg   = document.getElementById("landingMsg");
+    const btn   = document.querySelector(".access-btn");
+
+    if (!name || !email) {
+      msg.textContent = "Please fill in both your name and email.";
+      msg.className = "access-msg show error";
+      return;
+    }
+
+    btn.disabled = true;
+    btn.textContent = "Sending…";
+    msg.className = "access-msg";
+
+    try {
+      const res = await fetch(`${WORKER_URL}/request-access`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, email })
+      });
+      const data = await res.json();
+      if (data.ok) {
+        msg.textContent = "The Quizmaster will approve you shortly. 🎬";
+        msg.className = "access-msg show success";
+        btn.textContent = "Request Sent!";
+      } else {
+        throw new Error(data.error ?? "Unknown error");
+      }
+    } catch (e) {
+      msg.textContent = `Something went wrong: ${e.message}`;
+      msg.className = "access-msg show error";
+      btn.disabled = false;
+      btn.textContent = "Request Access";
+    }
+  };
+</script>
+</body>
+</html>
