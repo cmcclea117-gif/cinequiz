@@ -1900,6 +1900,18 @@ function renderQuiz() {
   const form = document.getElementById("quizForm");
   form.innerHTML = "";
 
+  // Check if we have any saved answers to restore
+  const hasSaved = quizData.some(q => localStorage.getItem(`cq-answer-${q.id}`));
+  let restoredBanner = document.getElementById("restoredBanner");
+  if (!restoredBanner) {
+    restoredBanner = document.createElement("div");
+    restoredBanner.id = "restoredBanner";
+    restoredBanner.style.cssText = "text-align:center;margin-bottom:16px;padding:10px 14px;background:var(--surface);border:1px solid var(--gold-dim);border-radius:6px;font-size:13px;color:var(--gold-dim);display:none;";
+    restoredBanner.innerHTML = "✓ Your previous answers have been restored.";
+    form.before(restoredBanner);
+  }
+  restoredBanner.style.display = hasSaved ? "block" : "none";
+
   quizData.forEach((q, i) => {
     const div = document.createElement("div");
     div.className = "question";
@@ -1936,6 +1948,21 @@ function renderQuiz() {
     html += `</div>`;
     div.innerHTML = html;
     form.appendChild(div);
+
+    // Restore saved answer if exists
+    const savedKey = `cq-answer-${q.id}`;
+    const savedId = localStorage.getItem(savedKey);
+    if (savedId) {
+      const radio = div.querySelector(`input[value="${savedId}"]`);
+      if (radio) radio.checked = true;
+    }
+
+    // Autosave on change
+    div.querySelectorAll("input[type=radio]").forEach(radio => {
+      radio.addEventListener("change", () => {
+        localStorage.setItem(savedKey, radio.value);
+      });
+    });
   });
 
   document.getElementById("quizArea").style.display = "block";
@@ -2001,6 +2028,8 @@ window.confirmRetake = function() {
 
 window.resetQuiz = function() {
   if (!quizData.length) return;
+  // Clear saved answers
+  quizData.forEach(q => localStorage.removeItem(`cq-answer-${q.id}`));
   shuffle(quizData);
   renderQuiz();
 };
