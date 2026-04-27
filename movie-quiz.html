@@ -1,0 +1,2206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CineQuiz</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,300&display=swap" rel="stylesheet">
+
+<style>
+  :root {
+    --bg:       #0d0d0f;
+    --surface:  #16161a;
+    --surface2: #1f1f26;
+    --border:   #2a2a35;
+    --gold:     #c9a84c;
+    --gold-dim: #7a6228;
+    --cream:    #f0e8d4;
+    --muted:    #6b6b80;
+    --correct:  #2a4a2e;
+    --incorrect:#4a2020;
+    --correct-border: #4caf6a;
+    --incorrect-border: #c94c4c;
+    --radius:   10px;
+    --font-display: 'DM Serif Display', Georgia, serif;
+    --font-body:    'DM Sans', sans-serif;
+  }
+
+  /* ── LIGHT MODE ── */
+  body.light {
+    --bg:       #f5f0e8;
+    --surface:  #fdfaf4;
+    --surface2: #f0ebe0;
+    --border:   #ddd5c0;
+    --gold:     #8a6420;
+    --gold-dim: #b08030;
+    --cream:    #2c2416;
+    --muted:    #8a7d68;
+    --correct:  #d4edda;
+    --incorrect:#fde8e8;
+    --correct-border: #4caf6a;
+    --incorrect-border: #c94c4c;
+  }
+
+  body.light .option-radio-dot::after { background: var(--bg); }
+
+  /* theme toggle button */
+  .theme-toggle {
+    position: fixed;
+    top: 12px;
+    right: 12px;
+    z-index: 100;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    font-size: 16px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    padding: 0;
+    opacity: 0.6;
+  }
+  .theme-toggle:hover {
+    opacity: 1;
+    border-color: var(--gold-dim);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--cream);
+    font-family: var(--font-body);
+    font-size: 15px;
+    line-height: 1.6;
+    min-height: 100vh;
+    padding: 32px 20px 80px;
+  }
+
+  /* Film grain overlay */
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.5;
+  }
+
+  .container {
+    max-width: 760px;
+    margin: 0 auto;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* ── HEADER ── */
+  .header {
+    text-align: center;
+    margin-bottom: 40px;
+  }
+
+  .header-eyebrow {
+    font-family: var(--font-body);
+    font-weight: 500;
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 10px;
+  }
+
+  h1 {
+    font-family: var(--font-display);
+    font-size: clamp(2.2rem, 6vw, 3.4rem);
+    font-style: italic;
+    color: var(--cream);
+    line-height: 1.1;
+  }
+
+  h1 span { color: var(--gold); }
+
+  .header-sub {
+    color: var(--muted);
+    font-size: 13px;
+    margin-top: 8px;
+    font-weight: 300;
+  }
+
+  /* ── CARD ── */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px;
+    margin-bottom: 16px;
+  }
+
+  .card-title {
+    font-family: var(--font-body);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .card-title::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  /* ── TOOLBAR ── */
+  .toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 6px;
+  }
+
+  .toolbar-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+
+  /* ── BUTTONS ── */
+  button, label.btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 9px 16px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    font-family: var(--font-body);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    background: var(--surface2);
+    color: var(--cream);
+    transition: all 0.15s ease;
+    white-space: nowrap;
+  }
+
+  button:hover, label.btn:hover {
+    border-color: var(--gold-dim);
+    background: #252530;
+    color: var(--gold);
+  }
+
+  button.primary {
+    background: var(--gold);
+    color: #0d0d0f;
+    border-color: var(--gold);
+    font-weight: 600;
+  }
+
+  button.primary:hover {
+    background: #d4b05e;
+    color: #0d0d0f;
+    border-color: #d4b05e;
+  }
+
+  button:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+  }
+
+  button:disabled:hover {
+    border-color: var(--border);
+    background: var(--surface2);
+    color: var(--cream);
+  }
+
+  input[type="file"] { display: none; }
+
+  /* ── SHARE ROW ── */
+  .share-row {
+    display: flex;
+    gap: 8px;
+    margin-top: 8px;
+    flex-wrap: wrap;
+  }
+
+  .share-row input {
+    flex: 1;
+    min-width: 200px;
+    padding: 9px 13px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--cream);
+    font-family: var(--font-body);
+    font-size: 13px;
+    outline: none;
+  }
+
+  .share-row input:focus {
+    border-color: var(--gold-dim);
+  }
+
+  .share-row input::placeholder {
+    color: var(--muted);
+  }
+
+  .share-hint {
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 8px;
+    font-weight: 300;
+  }
+
+  .share-hint a {
+    color: var(--gold-dim);
+    text-decoration: none;
+  }
+
+  .share-hint a:hover { color: var(--gold); text-decoration: underline; }
+
+  /* ── GENERATED LINK ── */
+  .link-output {
+    display: none;
+    margin-top: 10px;
+  }
+
+  .link-output input {
+    width: 100%;
+    padding: 9px 13px;
+    background: var(--bg);
+    border: 1px solid var(--gold-dim);
+    border-radius: 6px;
+    color: var(--gold);
+    font-family: var(--font-body);
+    font-size: 13px;
+  }
+
+  /* ── STATUS BADGE ── */
+  .status {
+    display: none;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 500;
+    margin-top: 12px;
+  }
+
+  .status.loading {
+    display: flex;
+    background: #1a1a2e;
+    border: 1px solid #2a2a4a;
+    color: #8888cc;
+  }
+
+  .status.error {
+    display: flex;
+    background: #2a1010;
+    border: 1px solid var(--incorrect-border);
+    color: #e88888;
+  }
+
+  .status.success {
+    display: flex;
+    background: #102010;
+    border: 1px solid var(--correct-border);
+    color: #88cc88;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .spinner {
+    width: 14px; height: 14px;
+    border: 2px solid currentColor;
+    border-top-color: transparent;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    flex-shrink: 0;
+  }
+
+  /* ── DIVIDER ── */
+  .divider {
+    text-align: center;
+    color: var(--muted);
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    position: relative;
+    margin: 16px 0;
+  }
+
+  .divider::before, .divider::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    width: calc(50% - 24px);
+    height: 1px;
+    background: var(--border);
+  }
+
+  .divider::before { left: 0; }
+  .divider::after { right: 0; }
+
+  /* ── QUIZ FORM ── */
+  #quizForm { margin-top: 8px; }
+
+  .question {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 22px 24px;
+    margin-bottom: 12px;
+    transition: border-color 0.2s ease;
+  }
+
+  .question.correct {
+    background: var(--correct);
+    border-color: var(--correct-border);
+  }
+
+  .question.incorrect {
+    background: var(--incorrect);
+    border-color: var(--incorrect-border);
+  }
+
+  .question-number {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 6px;
+  }
+
+  .question-text {
+    font-family: var(--font-display);
+    font-size: 1.05rem;
+    color: var(--cream);
+    margin-bottom: 18px;
+    line-height: 1.4;
+  }
+
+  .options-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .option-label {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 14px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: var(--surface2);
+    cursor: pointer;
+    transition: all 0.12s ease;
+  }
+
+  .option-label:hover {
+    border-color: var(--gold-dim);
+    background: #252530;
+  }
+
+  .option-label input[type="radio"] {
+    display: none;
+  }
+
+  .option-label input[type="radio"]:checked + .radio-dot {
+    background: var(--gold);
+    border-color: var(--gold);
+  }
+
+  .option-label input[type="radio"]:checked + .radio-dot::after {
+    opacity: 1;
+  }
+
+  .radio-dot {
+    width: 16px; height: 16px;
+    border-radius: 50%;
+    border: 2px solid var(--muted);
+    flex-shrink: 0;
+    position: relative;
+    transition: all 0.12s ease;
+  }
+
+  .radio-dot::after {
+    content: '';
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 6px; height: 6px;
+    background: #0d0d0f;
+    border-radius: 50%;
+    opacity: 0;
+    transition: opacity 0.12s ease;
+  }
+
+  .option-poster {
+    width: 44px; height: 44px;
+    border-radius: 5px;
+    object-fit: cover;
+    flex-shrink: 0;
+    border: 1px solid var(--border);
+    background: var(--border);
+  }
+
+  .option-poster-placeholder {
+    width: 44px; height: 44px;
+    border-radius: 5px;
+    background: var(--border);
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--muted);
+    font-size: 18px;
+  }
+
+  .option-info { flex: 1; min-width: 0; }
+
+  .option-text {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--cream);
+    line-height: 1.3;
+  }
+
+  .option-known-for {
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 2px;
+    font-weight: 300;
+    font-style: italic;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* ── CORRECT ANSWER REVEAL ── */
+  .answer-reveal {
+    margin-top: 12px;
+    padding: 8px 12px;
+    background: rgba(0,0,0,0.3);
+    border-radius: 5px;
+    font-size: 13px;
+    color: #88cc88;
+    font-weight: 500;
+  }
+
+  .answer-reveal .label {
+    color: var(--muted);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    font-weight: 600;
+    display: block;
+    margin-bottom: 2px;
+  }
+
+  /* ── SCORE BANNER ── */
+  #scoreBanner {
+    display: none;
+    background: linear-gradient(135deg, #1a1508 0%, #0d0d0f 100%);
+    border: 1px solid var(--gold);
+    border-radius: var(--radius);
+    padding: 28px;
+    text-align: center;
+    margin-bottom: 24px;
+  }
+
+  .score-label {
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--gold-dim);
+    font-weight: 600;
+    margin-bottom: 8px;
+  }
+
+  .score-number {
+    font-family: var(--font-display);
+    font-size: 3.5rem;
+    color: var(--gold);
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+
+  .score-total {
+    color: var(--muted);
+    font-size: 14px;
+  }
+
+  /* ── ACTION ROW ── */
+  .action-row {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 16px;
+  }
+
+  /* ── FOOTER NOTE ── */
+  .footer-note {
+    text-align: center;
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 40px;
+    font-weight: 300;
+  }
+
+  /* ── LOADING ENRICHMENT ── */
+  .enrich-progress {
+    display: none;
+    margin-top: 10px;
+    font-size: 12px;
+    color: var(--muted);
+  }
+
+  .progress-bar-wrap {
+    height: 3px;
+    background: var(--border);
+    border-radius: 2px;
+    margin-top: 6px;
+    overflow: hidden;
+  }
+
+  .progress-bar-fill {
+    height: 100%;
+    background: var(--gold);
+    border-radius: 2px;
+    width: 0%;
+    transition: width 0.3s ease;
+  }
+
+  /* Copied toast */
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(60px);
+    background: var(--surface2);
+    border: 1px solid var(--gold-dim);
+    color: var(--gold);
+    padding: 9px 18px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 500;
+    transition: transform 0.3s ease;
+    z-index: 999;
+    pointer-events: none;
+  }
+
+  /* ── CREATOR FORM ── */
+  .creator-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 8px;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border);
+    align-items: center;
+  }
+  .creator-row:last-child { border-bottom: none; }
+  .creator-question {
+    font-size: 13px;
+    color: var(--cream);
+    line-height: 1.4;
+    padding-right: 8px;
+  }
+  .creator-input {
+    padding: 8px 11px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--cream);
+    font-family: var(--font-body);
+    font-size: 13px;
+    outline: none;
+    width: 100%;
+  }
+  .creator-input:focus { border-color: var(--gold-dim); }
+  .creator-input::placeholder { color: var(--muted); }
+  .creator-header {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 8px;
+    padding-bottom: 8px;
+    margin-bottom: 4px;
+    border-bottom: 1px solid var(--gold-dim);
+  }
+  .creator-header span {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--gold-dim);
+  }
+  /* ── MODE TOGGLE ── */
+  .mode-toggle {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+  .mode-toggle button {
+    flex: 1;
+    font-size: 14px;
+    padding: 11px;
+  }
+  /* ── DEV PANEL ── */
+  .dev-panel {
+    display: none;
+    margin-top: 14px;
+    padding: 14px;
+    background: #0a0a0d;
+    border: 1px dashed var(--border);
+    border-radius: 6px;
+  }
+  .dev-panel-title {
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 10px;
+  }
+
+  .toast.show { transform: translateX(-50%) translateY(0); }
+</style>
+</head>
+<body>
+
+<button class="theme-toggle" onclick="toggleTheme()" id="themeBtn" title="Toggle light/dark mode">☀️</button>
+
+<div class="container">
+
+  <!-- HEADER -->
+  <div class="header">
+    <div class="header-eyebrow" onclick="devClick()" style="cursor:default;user-select:none;">★ Know Your Friend ★</div>
+    <h1>Cine<span>Quiz</span></h1>
+    <div class="header-sub">Build a movie quiz from CSV — enrich with TMDB — share with friends</div>
+  </div>
+
+  <!-- MODE TOGGLE -->
+  <div class="mode-toggle">
+    <button onclick="switchMode('create')" id="modeCreate" class="primary">✏️ Create Quiz</button>
+    <button onclick="switchMode('import')" id="modeImport">📁 Import CSV</button>
+  </div>
+
+  <!-- CREATOR SECTION -->
+  <div id="creatorSection">
+    <div class="card">
+      <div class="card-title">Your Answers</div>
+
+      <!-- Quiz Type -->
+      <div style="margin-bottom:14px;">
+        <div style="font-size:11px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin-bottom:8px;">Quiz Type</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <button onclick="setQuizType('movies');renderCreatorForm()" id="ctypeMovies" class="primary" style="flex:1;">🎬 Movies</button>
+          <button onclick="setQuizType('tv');renderCreatorForm()" id="ctypeTV" style="flex:1;">📺 TV Shows</button>
+          <button onclick="setQuizType('games');renderCreatorForm()" id="ctypeGames" style="flex:1;">🎮 Video Games</button>
+          <button onclick="setQuizType('music');renderCreatorForm()" id="ctypeMusic" style="flex:1;">🎵 Music</button>
+        </div>
+      </div>
+
+      <div style="margin-bottom:16px;">
+        <div style="font-size:11px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin-bottom:6px;">Your Name</div>
+        <input class="creator-input" id="creatorName" placeholder="e.g. Chris" autocomplete="off"
+          style="width:100%;max-width:300px;">
+        <div style="font-size:11px;color:var(--muted);margin-top:4px;">Friends will see "How well do you know Chris?" when they open your quiz.</div>
+      </div>
+
+      <div style="font-size:12px;color:var(--muted);margin-bottom:14px;line-height:1.6;">
+        Fill in <strong style="color:var(--cream);">Your Answer</strong> for each question. Use
+        <code style="background:var(--surface2);padding:1px 5px;border-radius:3px;font-size:11px;">Character (Actor)</code>
+        format for person questions. Add a <strong style="color:var(--cream);">Search Hint</strong> (show/movie name)
+        to help find the right poster. Leave any question blank to skip it.
+      </div>
+
+      <div class="creator-header">
+        <span>Question</span>
+        <span>Your Answer</span>
+        <span>Search Hint (optional)</span>
+      </div>
+      <div id="creatorForm"></div>
+
+      <button class="primary" onclick="buildFromCreator()" style="width:100%;margin-top:16px;padding:12px;font-size:14px;">
+        ✨ Generate Quiz
+      </button>
+    </div>
+  </div>
+
+  <!-- IMPORT SECTION (CSV / dev mode) -->
+  <div id="importSection" style="display:none;">
+
+  <!-- INSTRUCTIONS -->
+  <div class="card" id="instructionsCard">
+    <div class="card-title" style="cursor:pointer;" onclick="toggleInstructions()">
+      How to Use
+      <span id="instructionsChevron" style="margin-left:auto;font-size:16px;color:var(--muted);transition:transform 0.2s;">▾</span>
+    </div>
+    <div id="instructionsBody">
+      <ol style="list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:10px;">
+        <li style="display:flex;gap:12px;align-items:flex-start;">
+          <span style="background:var(--gold);color:#0d0d0f;font-size:11px;font-weight:700;border-radius:50%;width:20px;height:20px;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;">1</span>
+          <span style="font-size:13px;color:var(--cream);line-height:1.5;">Select your <strong style="color:var(--gold);">Quiz Type</strong> — Movies, TV Shows, or Video Games.</span>
+        </li>
+        <li style="display:flex;gap:12px;align-items:flex-start;">
+          <span style="background:var(--gold);color:#0d0d0f;font-size:11px;font-weight:700;border-radius:50%;width:20px;height:20px;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;">2</span>
+          <span style="font-size:13px;color:var(--cream);line-height:1.5;">Click <strong style="color:var(--gold);">Download Template</strong> to get a pre-filled CSV with 20 starter questions. Fill in your correct answers in the Option columns. Leave wrong answer columns blank and the AI will generate them — or fill them in yourself. For actor/character answers, use the format <code style="background:var(--surface2);padding:1px 5px;border-radius:3px;font-size:12px;">Sue Silvester (Jane Lynch)</code> and add the show name in the Search Hint column.</span>
+        </li>
+        <li style="display:flex;gap:12px;align-items:flex-start;">
+          <span style="background:var(--gold);color:#0d0d0f;font-size:11px;font-weight:700;border-radius:50%;width:20px;height:20px;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;">3</span>
+          <span style="font-size:13px;color:var(--cream);line-height:1.5;">Paste your <strong style="color:var(--gold);">Anthropic API Key</strong> to enable AI wrong-answer generation. Get one free at <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener" style="color:var(--gold-dim);">console.anthropic.com</a>.</span>
+        </li>
+        <li style="display:flex;gap:12px;align-items:flex-start;">
+          <span style="background:var(--gold);color:#0d0d0f;font-size:11px;font-weight:700;border-radius:50%;width:20px;height:20px;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;">4</span>
+          <span style="font-size:13px;color:var(--cream);line-height:1.5;">Click <strong style="color:var(--gold);">Choose CSV</strong>, select your filled-in file, then click <strong style="color:var(--gold);">Load &amp; Enrich</strong>. The app fetches posters and generates wrong answers automatically.</span>
+        </li>
+        <li style="display:flex;gap:12px;align-items:flex-start;">
+          <span style="background:var(--gold);color:#0d0d0f;font-size:11px;font-weight:700;border-radius:50%;width:20px;height:20px;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;">5</span>
+          <span style="font-size:13px;color:var(--cream);line-height:1.5;">Scroll down to review the quiz. If it looks good, move on to sharing.</span>
+        </li>
+        <li style="display:flex;gap:12px;align-items:flex-start;">
+          <span style="background:var(--gold);color:#0d0d0f;font-size:11px;font-weight:700;border-radius:50%;width:20px;height:20px;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;">6</span>
+          <span style="font-size:13px;color:var(--cream);line-height:1.5;">In the <strong style="color:var(--gold);">Share Quiz</strong> card, paste your <strong style="color:var(--gold);">GitHub Token</strong> (classic token with <code style="background:var(--surface2);padding:1px 5px;border-radius:3px;font-size:12px;">gist</code> scope — generate one at <a href="https://github.com/settings/tokens/new?scopes=gist&description=CineQuiz" target="_blank" rel="noopener" style="color:var(--gold-dim);">github.com/settings/tokens</a>) and click <strong style="color:var(--gold);">Publish to Gist</strong>.</span>
+        </li>
+        <li style="display:flex;gap:12px;align-items:flex-start;">
+          <span style="background:var(--gold);color:#0d0d0f;font-size:11px;font-weight:700;border-radius:50%;width:20px;height:20px;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;">7</span>
+          <span style="font-size:13px;color:var(--cream);line-height:1.5;">A shareable link is generated automatically. Click <strong style="color:var(--gold);">Copy</strong> and send it to your friends — when they open it, the quiz loads instantly!</span>
+        </li>
+      </ol>
+    </div>
+  </div>
+
+  <!-- STATUS BADGE -->
+  <div id="status" class="status"></div>
+
+  <!-- IMPORT SECTION -->
+  <div class="card">
+    <div class="card-title">Import Quiz</div>
+
+    <!-- Step 1: Quiz Type -->
+    <div style="margin-bottom:14px;">
+      <div style="font-size:11px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin-bottom:8px;">Step 1 — Quiz Type</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button onclick="setQuizType('movies')" id="typeMovies" class="primary" style="flex:1;">🎬 Movies</button>
+        <button onclick="setQuizType('tv')" id="typeTV" style="flex:1;">📺 TV Shows</button>
+        <button onclick="setQuizType('games')" id="typeGames" style="flex:1;">🎮 Video Games</button>
+        <button onclick="setQuizType('music')" id="typeMusic" style="flex:1;">🎵 Music</button>
+      </div>
+    </div>
+
+    <!-- Step 2: Template + CSV -->
+    <div style="font-size:11px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin-bottom:8px;">Step 2 — Load CSV</div>
+    <div class="toolbar-row">
+      <button onclick="downloadTemplate()">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M9 2H4a1 1 0 00-1 1v10a1 1 0 001 1h8a1 1 0 001-1V6M9 2l4 4M9 2v4h4"/></svg>
+        Download Template
+      </button>
+      <label class="btn" for="csvFile">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M2 11v2a1 1 0 001 1h10a1 1 0 001-1v-2M8 10V2M5 5l3-3 3 3"/></svg>
+        Choose CSV
+      </label>
+      <input type="file" id="csvFile" accept=".csv">
+      <button onclick="loadCSV()" id="loadBtn">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M8 2v8M5 7l3 3 3-3"/><path d="M2 13h12"/></svg>
+        Load &amp; Enrich
+      </button>
+    </div>
+
+    <div id="fileName" style="font-size:12px;color:var(--muted);margin-top:2px;"></div>
+
+    <!-- Step 3: Anthropic Key (dev override) -->
+    <div class="dev-panel" id="anthropicKeyPanel">
+      <div class="dev-panel-title">Dev — Anthropic API Key Override (overrides Gemini)</div>
+      <input type="password" id="anthropicKey" placeholder="sk-ant-xxxxxxxxxxxxxxxxxxxx"
+        style="width:100%;padding:9px 13px;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--cream);font-family:var(--font-body);font-size:13px;outline:none;">
+    </div>
+
+    <!-- RAWG key hardcoded — input hidden -->
+    <div id="rawgKeyWrap" style="display:none;"></div>
+
+    <div id="enrichProgress" class="enrich-progress">
+      <span id="enrichLabel">Fetching data…</span>
+      <div class="progress-bar-wrap">
+        <div class="progress-bar-fill" id="progressFill"></div>
+      </div>
+    </div>
+  </div>
+
+  </div> <!-- end importSection -->
+
+  <!-- SHARE SECTION — always visible -->
+  <div class="card">
+    <div class="card-title">Share Quiz</div>
+
+    <div style="margin-bottom:12px;">
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+        <button onclick="publishToGist()" id="gistBtn" disabled class="primary" style="flex:1;">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="8" cy="8" r="6"/><path d="M5 8h4M7 6l2 2-2 2"/></svg>
+          Publish &amp; Get Share Link
+        </button>
+        <button onclick="exportQuizAsJSON()" id="exportJsonBtn" disabled>
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M2 11v2a1 1 0 001 1h10a1 1 0 001-1v-2M8 10V2M5 5l3-3 3 3"/></svg>
+          Download JSON
+        </button>
+      </div>
+    </div>
+
+    <!-- Dev: manual token override -->
+    <div class="dev-panel" id="ghTokenPanel">
+      <div class="dev-panel-title">Dev — GitHub Token Override</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <input type="password" id="ghToken" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx"
+          style="flex:1;min-width:200px;padding:9px 13px;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--cream);font-family:var(--font-body);font-size:13px;outline:none;">
+      </div>
+    </div>
+
+    <div class="divider">or load from URL</div>
+
+    <div class="share-row">
+      <input type="text" id="jsonUrlInput" placeholder="https://yourdomain.com/quiz-data/my-quiz.json">
+      <button onclick="loadFromURL()">Load</button>
+      <button onclick="generateShareLink()" id="shareBtn">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="3" r="1.5"/><circle cx="4" cy="8" r="1.5"/><circle cx="12" cy="13" r="1.5"/><path d="M5.5 9l5 3M10.5 4.5l-5 3"/></svg>
+        Generate Link
+      </button>
+    </div>
+
+    <div class="link-output" id="linkOutput">
+      <div style="font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:var(--gold-dim);font-weight:600;margin-bottom:6px;">Shareable Link</div>
+      <div style="display:flex;gap:8px;">
+        <input type="text" id="shareLink" readonly>
+        <button onclick="copyLink()">Copy</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- QUIZ AREA -->
+  <div id="quizArea" style="display:none;">
+
+    <div id="scoreBanner">
+      <div class="score-label">Final Score</div>
+      <div class="score-number" id="scoreNumber">0</div>
+      <div class="score-total" id="scoreTotal"></div>
+    </div>
+
+    <div class="action-row" id="postSubmitActions" style="display:none;margin-bottom:16px;">
+      <button class="primary" onclick="downloadResultsCard()" id="resultsCardBtn">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="2" y="2" width="12" height="12" rx="2"/><path d="M2 6h12"/></svg>
+        Download Results Card
+      </button>
+      <button onclick="exportResults()" id="exportResultsBtn">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M2 11v2a1 1 0 001 1h10a1 1 0 001-1v-2M8 10V2M5 5l3-3 3 3"/></svg>
+        Export CSV
+      </button>
+      <button onclick="confirmRetake()">↩ Retake Quiz</button>
+    </div>
+
+    <form id="quizForm" onsubmit="return false;"></form>
+
+    <div class="action-row">
+      <button class="primary" id="submitBtn" onclick="submitQuiz()">Submit Quiz</button>
+    </div>
+
+  </div>
+
+  <div class="footer-note">
+    Powered by <a href="https://www.themoviedb.org/" target="_blank" rel="noopener" style="color:var(--gold-dim); text-decoration:none;">TMDB API</a>
+    &nbsp;·&nbsp; Built with PapaParse
+  </div>
+
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast">Copied!</div>
+
+<script>/* PapaParse 5.4.1 — inlined to avoid CDN blocking when run from file:// */
+/* @license
+Papa Parse
+v5.4.1
+https://github.com/mholt/PapaParse
+License: MIT
+*/
+!function(e,t){"function"==typeof define&&define.amd?define([],t):"object"==typeof module&&"undefined"!=typeof exports?module.exports=t():e.Papa=t()}(this,function s(){"use strict";var f="undefined"!=typeof self?self:"undefined"!=typeof window?window:void 0!==f?f:{};var n=!f.document&&!!f.postMessage,o=f.IS_PAPA_WORKER||!1,a={},u=0,b={parse:function(e,t){var r=(t=t||{}).dynamicTyping||!1;J(r)&&(t.dynamicTypingFunction=r,r={});if(t.dynamicTyping=r,t.transform=!!J(t.transform)&&t.transform,t.worker&&b.WORKERS_SUPPORTED){var i=function(){if(!b.WORKERS_SUPPORTED)return!1;var e=(r=f.URL||f.webkitURL||null,i=s.toString(),b.BLOB_URL||(b.BLOB_URL=r.createObjectURL(new Blob(["var global = (function() { if (typeof self !== 'undefined') { return self; } if (typeof window !== 'undefined') { return window; } if (typeof global !== 'undefined') { return global; } return {}; })(); global.IS_PAPA_WORKER=true; ","(",i,")();"],{type:"text/javascript"})))),t=new f.Worker(e);var r,i;return t.onmessage=_,t.id=u++,a[t.id]=t}();return i.userStep=t.step,i.userChunk=t.chunk,i.userComplete=t.complete,i.userError=t.error,t.step=J(t.step),t.chunk=J(t.chunk),t.complete=J(t.complete),t.error=J(t.error),delete t.worker,void i.postMessage({input:e,config:t,workerId:i.id})}var n=null;b.NODE_STREAM_INPUT,"string"==typeof e?(e=function(e){if(65279===e.charCodeAt(0))return e.slice(1);return e}(e),n=t.download?new l(t):new p(t)):!0===e.readable&&J(e.read)&&J(e.on)?n=new g(t):(f.File&&e instanceof File||e instanceof Object)&&(n=new c(t));return n.stream(e)},unparse:function(e,t){var n=!1,_=!0,m=",",y="\r\n",s='"',a=s+s,r=!1,i=null,o=!1;!function(){if("object"!=typeof t)return;"string"!=typeof t.delimiter||b.BAD_DELIMITERS.filter(function(e){return-1!==t.delimiter.indexOf(e)}).length||(m=t.delimiter);("boolean"==typeof t.quotes||"function"==typeof t.quotes||Array.isArray(t.quotes))&&(n=t.quotes);"boolean"!=typeof t.skipEmptyLines&&"string"!=typeof t.skipEmptyLines||(r=t.skipEmptyLines);"string"==typeof t.newline&&(y=t.newline);"string"==typeof t.quoteChar&&(s=t.quoteChar);"boolean"==typeof t.header&&(_=t.header);if(Array.isArray(t.columns)){if(0===t.columns.length)throw new Error("Option columns is empty");i=t.columns}void 0!==t.escapeChar&&(a=t.escapeChar+s);("boolean"==typeof t.escapeFormulae||t.escapeFormulae instanceof RegExp)&&(o=t.escapeFormulae instanceof RegExp?t.escapeFormulae:/^[=+\-@\t\r].*$/)}();var u=new RegExp(Q(s),"g");"string"==typeof e&&(e=JSON.parse(e));if(Array.isArray(e)){if(!e.length||Array.isArray(e[0]))return h(null,e,r);if("object"==typeof e[0])return h(i||Object.keys(e[0]),e,r)}else if("object"==typeof e)return"string"==typeof e.data&&(e.data=JSON.parse(e.data)),Array.isArray(e.data)&&(e.fields||(e.fields=e.meta&&e.meta.fields||i),e.fields||(e.fields=Array.isArray(e.data[0])?e.fields:"object"==typeof e.data[0]?Object.keys(e.data[0]):[]),Array.isArray(e.data[0])||"object"==typeof e.data[0]||(e.data=[e.data])),h(e.fields||[],e.data||[],r);throw new Error("Unable to serialize unrecognized input");function h(e,t,r){var i="";"string"==typeof e&&(e=JSON.parse(e)),"string"==typeof t&&(t=JSON.parse(t));var n=Array.isArray(e)&&0<e.length,s=!Array.isArray(t[0]);if(n&&_){for(var a=0;a<e.length;a++)0<a&&(i+=m),i+=v(e[a],a);0<t.length&&(i+=y)}for(var o=0;o<t.length;o++){var u=n?e.length:t[o].length,h=!1,f=n?0===Object.keys(t[o]).length:0===t[o].length;if(r&&!n&&(h="greedy"===r?""===t[o].join("").trim():1===t[o].length&&0===t[o][0].length),"greedy"===r&&n){for(var d=[],l=0;l<u;l++){var c=s?e[l]:l;d.push(t[o][c])}h=""===d.join("").trim()}if(!h){for(var p=0;p<u;p++){0<p&&!f&&(i+=m);var g=n&&s?e[p]:p;i+=v(t[o][g],p)}o<t.length-1&&(!r||0<u&&!f)&&(i+=y)}}return i}function v(e,t){if(null==e)return"";if(e.constructor===Date)return JSON.stringify(e).slice(1,25);var r=!1;o&&"string"==typeof e&&o.test(e)&&(e="'"+e,r=!0);var i=e.toString().replace(u,a);return(r=r||!0===n||"function"==typeof n&&n(e,t)||Array.isArray(n)&&n[t]||function(e,t){for(var r=0;r<t.length;r++)if(-1<e.indexOf(t[r]))return!0;return!1}(i,b.BAD_DELIMITERS)||-1<i.indexOf(m)||" "===i.charAt(0)||" "===i.charAt(i.length-1))?s+i+s:i}}};if(b.RECORD_SEP=String.fromCharCode(30),b.UNIT_SEP=String.fromCharCode(31),b.BYTE_ORDER_MARK="\ufeff",b.BAD_DELIMITERS=["\r","\n",'"',b.BYTE_ORDER_MARK],b.WORKERS_SUPPORTED=!n&&!!f.Worker,b.NODE_STREAM_INPUT=1,b.LocalChunkSize=10485760,b.RemoteChunkSize=5242880,b.DefaultDelimiter=",",b.Parser=E,b.ParserHandle=r,b.NetworkStreamer=l,b.FileStreamer=c,b.StringStreamer=p,b.ReadableStreamStreamer=g,f.jQuery){var d=f.jQuery;d.fn.parse=function(o){var r=o.config||{},u=[];return this.each(function(e){if(!("INPUT"===d(this).prop("tagName").toUpperCase()&&"file"===d(this).attr("type").toLowerCase()&&f.FileReader)||!this.files||0===this.files.length)return!0;for(var t=0;t<this.files.length;t++)u.push({file:this.files[t],inputElem:this,instanceConfig:d.extend({},r)})}),e(),this;function e(){if(0!==u.length){var e,t,r,i,n=u[0];if(J(o.before)){var s=o.before(n.file,n.inputElem);if("object"==typeof s){if("abort"===s.action)return e="AbortError",t=n.file,r=n.inputElem,i=s.reason,void(J(o.error)&&o.error({name:e},t,r,i));if("skip"===s.action)return void h();"object"==typeof s.config&&(n.instanceConfig=d.extend(n.instanceConfig,s.config))}else if("skip"===s)return void h()}var a=n.instanceConfig.complete;n.instanceConfig.complete=function(e){J(a)&&a(e,n.file,n.inputElem),h()},b.parse(n.file,n.instanceConfig)}else J(o.complete)&&o.complete()}function h(){u.splice(0,1),e()}}}function h(e){this._handle=null,this._finished=!1,this._completed=!1,this._halted=!1,this._input=null,this._baseIndex=0,this._partialLine="",this._rowCount=0,this._start=0,this._nextChunk=null,this.isFirstChunk=!0,this._completeResults={data:[],errors:[],meta:{}},function(e){var t=w(e);t.chunkSize=parseInt(t.chunkSize),e.step||e.chunk||(t.chunkSize=null);this._handle=new r(t),(this._handle.streamer=this)._config=t}.call(this,e),this.parseChunk=function(e,t){if(this.isFirstChunk&&J(this._config.beforeFirstChunk)){var r=this._config.beforeFirstChunk(e);void 0!==r&&(e=r)}this.isFirstChunk=!1,this._halted=!1;var i=this._partialLine+e;this._partialLine="";var n=this._handle.parse(i,this._baseIndex,!this._finished);if(!this._handle.paused()&&!this._handle.aborted()){var s=n.meta.cursor;this._finished||(this._partialLine=i.substring(s-this._baseIndex),this._baseIndex=s),n&&n.data&&(this._rowCount+=n.data.length);var a=this._finished||this._config.preview&&this._rowCount>=this._config.preview;if(o)f.postMessage({results:n,workerId:b.WORKER_ID,finished:a});else if(J(this._config.chunk)&&!t){if(this._config.chunk(n,this._handle),this._handle.paused()||this._handle.aborted())return void(this._halted=!0);n=void 0,this._completeResults=void 0}return this._config.step||this._config.chunk||(this._completeResults.data=this._completeResults.data.concat(n.data),this._completeResults.errors=this._completeResults.errors.concat(n.errors),this._completeResults.meta=n.meta),this._completed||!a||!J(this._config.complete)||n&&n.meta.aborted||(this._config.complete(this._completeResults,this._input),this._completed=!0),a||n&&n.meta.paused||this._nextChunk(),n}this._halted=!0},this._sendError=function(e){J(this._config.error)?this._config.error(e):o&&this._config.error&&f.postMessage({workerId:b.WORKER_ID,error:e,finished:!1})}}function l(e){var i;(e=e||{}).chunkSize||(e.chunkSize=b.RemoteChunkSize),h.call(this,e),this._nextChunk=n?function(){this._readChunk(),this._chunkLoaded()}:function(){this._readChunk()},this.stream=function(e){this._input=e,this._nextChunk()},this._readChunk=function(){if(this._finished)this._chunkLoaded();else{if(i=new XMLHttpRequest,this._config.withCredentials&&(i.withCredentials=this._config.withCredentials),n||(i.onload=v(this._chunkLoaded,this),i.onerror=v(this._chunkError,this)),i.open(this._config.downloadRequestBody?"POST":"GET",this._input,!n),this._config.downloadRequestHeaders){var e=this._config.downloadRequestHeaders;for(var t in e)i.setRequestHeader(t,e[t])}if(this._config.chunkSize){var r=this._start+this._config.chunkSize-1;i.setRequestHeader("Range","bytes="+this._start+"-"+r)}try{i.send(this._config.downloadRequestBody)}catch(e){this._chunkError(e.message)}n&&0===i.status&&this._chunkError()}},this._chunkLoaded=function(){4===i.readyState&&(i.status<200||400<=i.status?this._chunkError():(this._start+=this._config.chunkSize?this._config.chunkSize:i.responseText.length,this._finished=!this._config.chunkSize||this._start>=function(e){var t=e.getResponseHeader("Content-Range");if(null===t)return-1;return parseInt(t.substring(t.lastIndexOf("/")+1))}(i),this.parseChunk(i.responseText)))},this._chunkError=function(e){var t=i.statusText||e;this._sendError(new Error(t))}}function c(e){var i,n;(e=e||{}).chunkSize||(e.chunkSize=b.LocalChunkSize),h.call(this,e);var s="undefined"!=typeof FileReader;this.stream=function(e){this._input=e,n=e.slice||e.webkitSlice||e.mozSlice,s?((i=new FileReader).onload=v(this._chunkLoaded,this),i.onerror=v(this._chunkError,this)):i=new FileReaderSync,this._nextChunk()},this._nextChunk=function(){this._finished||this._config.preview&&!(this._rowCount<this._config.preview)||this._readChunk()},this._readChunk=function(){var e=this._input;if(this._config.chunkSize){var t=Math.min(this._start+this._config.chunkSize,this._input.size);e=n.call(e,this._start,t)}var r=i.readAsText(e,this._config.encoding);s||this._chunkLoaded({target:{result:r}})},this._chunkLoaded=function(e){this._start+=this._config.chunkSize,this._finished=!this._config.chunkSize||this._start>=this._input.size,this.parseChunk(e.target.result)},this._chunkError=function(){this._sendError(i.error)}}function p(e){var r;h.call(this,e=e||{}),this.stream=function(e){return r=e,this._nextChunk()},this._nextChunk=function(){if(!this._finished){var e,t=this._config.chunkSize;return t?(e=r.substring(0,t),r=r.substring(t)):(e=r,r=""),this._finished=!r,this.parseChunk(e)}}}function g(e){h.call(this,e=e||{});var t=[],r=!0,i=!1;this.pause=function(){h.prototype.pause.apply(this,arguments),this._input.pause()},this.resume=function(){h.prototype.resume.apply(this,arguments),this._input.resume()},this.stream=function(e){this._input=e,this._input.on("data",this._streamData),this._input.on("end",this._streamEnd),this._input.on("error",this._streamError)},this._checkIsFinished=function(){i&&1===t.length&&(this._finished=!0)},this._nextChunk=function(){this._checkIsFinished(),t.length?this.parseChunk(t.shift()):r=!0},this._streamData=v(function(e){try{t.push("string"==typeof e?e:e.toString(this._config.encoding)),r&&(r=!1,this._checkIsFinished(),this.parseChunk(t.shift()))}catch(e){this._streamError(e)}},this),this._streamError=v(function(e){this._streamCleanUp(),this._sendError(e)},this),this._streamEnd=v(function(){this._streamCleanUp(),i=!0,this._streamData("")},this),this._streamCleanUp=v(function(){this._input.removeListener("data",this._streamData),this._input.removeListener("end",this._streamEnd),this._input.removeListener("error",this._streamError)},this)}function r(m){var a,o,u,i=Math.pow(2,53),n=-i,s=/^\s*-?(\d+\.?|\.\d+|\d+\.\d+)([eE][-+]?\d+)?\s*$/,h=/^((\d{4}-[01]\d-[0-3]\dT[0-2]\d:[0-5]\d:[0-5]\d\.\d+([+-][0-2]\d:[0-5]\d|Z))|(\d{4}-[01]\d-[0-3]\dT[0-2]\d:[0-5]\d:[0-5]\d([+-][0-2]\d:[0-5]\d|Z))|(\d{4}-[01]\d-[0-3]\dT[0-2]\d:[0-5]\d([+-][0-2]\d:[0-5]\d|Z)))$/,t=this,r=0,f=0,d=!1,e=!1,l=[],c={data:[],errors:[],meta:{}};if(J(m.step)){var p=m.step;m.step=function(e){if(c=e,_())g();else{if(g(),0===c.data.length)return;r+=e.data.length,m.preview&&r>m.preview?o.abort():(c.data=c.data[0],p(c,t))}}}function y(e){return"greedy"===m.skipEmptyLines?""===e.join("").trim():1===e.length&&0===e[0].length}function g(){return c&&u&&(k("Delimiter","UndetectableDelimiter","Unable to auto-detect delimiting character; defaulted to '"+b.DefaultDelimiter+"'"),u=!1),m.skipEmptyLines&&(c.data=c.data.filter(function(e){return!y(e)})),_()&&function(){if(!c)return;function e(e,t){J(m.transformHeader)&&(e=m.transformHeader(e,t)),l.push(e)}if(Array.isArray(c.data[0])){for(var t=0;_()&&t<c.data.length;t++)c.data[t].forEach(e);c.data.splice(0,1)}else c.data.forEach(e)}(),function(){if(!c||!m.header&&!m.dynamicTyping&&!m.transform)return c;function e(e,t){var r,i=m.header?{}:[];for(r=0;r<e.length;r++){var n=r,s=e[r];m.header&&(n=r>=l.length?"__parsed_extra":l[r]),m.transform&&(s=m.transform(s,n)),s=v(n,s),"__parsed_extra"===n?(i[n]=i[n]||[],i[n].push(s)):i[n]=s}return m.header&&(r>l.length?k("FieldMismatch","TooManyFields","Too many fields: expected "+l.length+" fields but parsed "+r,f+t):r<l.length&&k("FieldMismatch","TooFewFields","Too few fields: expected "+l.length+" fields but parsed "+r,f+t)),i}var t=1;!c.data.length||Array.isArray(c.data[0])?(c.data=c.data.map(e),t=c.data.length):c.data=e(c.data,0);m.header&&c.meta&&(c.meta.fields=l);return f+=t,c}()}function _(){return m.header&&0===l.length}function v(e,t){return r=e,m.dynamicTypingFunction&&void 0===m.dynamicTyping[r]&&(m.dynamicTyping[r]=m.dynamicTypingFunction(r)),!0===(m.dynamicTyping[r]||m.dynamicTyping)?"true"===t||"TRUE"===t||"false"!==t&&"FALSE"!==t&&(function(e){if(s.test(e)){var t=parseFloat(e);if(n<t&&t<i)return!0}return!1}(t)?parseFloat(t):h.test(t)?new Date(t):""===t?null:t):t;var r}function k(e,t,r,i){var n={type:e,code:t,message:r};void 0!==i&&(n.row=i),c.errors.push(n)}this.parse=function(e,t,r){var i=m.quoteChar||'"';if(m.newline||(m.newline=function(e,t){e=e.substring(0,1048576);var r=new RegExp(Q(t)+"([^]*?)"+Q(t),"gm"),i=(e=e.replace(r,"")).split("\r"),n=e.split("\n"),s=1<n.length&&n[0].length<i[0].length;if(1===i.length||s)return"\n";for(var a=0,o=0;o<i.length;o++)"\n"===i[o][0]&&a++;return a>=i.length/2?"\r\n":"\r"}(e,i)),u=!1,m.delimiter)J(m.delimiter)&&(m.delimiter=m.delimiter(e),c.meta.delimiter=m.delimiter);else{var n=function(e,t,r,i,n){var s,a,o,u;n=n||[",","\t","|",";",b.RECORD_SEP,b.UNIT_SEP];for(var h=0;h<n.length;h++){var f=n[h],d=0,l=0,c=0;o=void 0;for(var p=new E({comments:i,delimiter:f,newline:t,preview:10}).parse(e),g=0;g<p.data.length;g++)if(r&&y(p.data[g]))c++;else{var _=p.data[g].length;l+=_,void 0!==o?0<_&&(d+=Math.abs(_-o),o=_):o=_}0<p.data.length&&(l/=p.data.length-c),(void 0===a||d<=a)&&(void 0===u||u<l)&&1.99<l&&(a=d,s=f,u=l)}return{successful:!!(m.delimiter=s),bestDelimiter:s}}(e,m.newline,m.skipEmptyLines,m.comments,m.delimitersToGuess);n.successful?m.delimiter=n.bestDelimiter:(u=!0,m.delimiter=b.DefaultDelimiter),c.meta.delimiter=m.delimiter}var s=w(m);return m.preview&&m.header&&s.preview++,a=e,o=new E(s),c=o.parse(a,t,r),g(),d?{meta:{paused:!0}}:c||{meta:{paused:!1}}},this.paused=function(){return d},this.pause=function(){d=!0,o.abort(),a=J(m.chunk)?"":a.substring(o.getCharIndex())},this.resume=function(){t.streamer._halted?(d=!1,t.streamer.parseChunk(a,!0)):setTimeout(t.resume,3)},this.aborted=function(){return e},this.abort=function(){e=!0,o.abort(),c.meta.aborted=!0,J(m.complete)&&m.complete(c),a=""}}function Q(e){return e.replace(/[.*+?^${}()|[\]\\]/g,"\\$&")}function E(j){var z,M=(j=j||{}).delimiter,P=j.newline,U=j.comments,q=j.step,N=j.preview,B=j.fastMode,K=z=void 0===j.quoteChar||null===j.quoteChar?'"':j.quoteChar;if(void 0!==j.escapeChar&&(K=j.escapeChar),("string"!=typeof M||-1<b.BAD_DELIMITERS.indexOf(M))&&(M=","),U===M)throw new Error("Comment character same as delimiter");!0===U?U="#":("string"!=typeof U||-1<b.BAD_DELIMITERS.indexOf(U))&&(U=!1),"\n"!==P&&"\r"!==P&&"\r\n"!==P&&(P="\n");var W=0,H=!1;this.parse=function(i,t,r){if("string"!=typeof i)throw new Error("Input must be a string");var n=i.length,e=M.length,s=P.length,a=U.length,o=J(q),u=[],h=[],f=[],d=W=0;if(!i)return L();if(j.header&&!t){var l=i.split(P)[0].split(M),c=[],p={},g=!1;for(var _ in l){var m=l[_];J(j.transformHeader)&&(m=j.transformHeader(m,_));var y=m,v=p[m]||0;for(0<v&&(g=!0,y=m+"_"+v),p[m]=v+1;c.includes(y);)y=y+"_"+v;c.push(y)}if(g){var k=i.split(P);k[0]=c.join(M),i=k.join(P)}}if(B||!1!==B&&-1===i.indexOf(z)){for(var b=i.split(P),E=0;E<b.length;E++){if(f=b[E],W+=f.length,E!==b.length-1)W+=P.length;else if(r)return L();if(!U||f.substring(0,a)!==U){if(o){if(u=[],I(f.split(M)),F(),H)return L()}else I(f.split(M));if(N&&N<=E)return u=u.slice(0,N),L(!0)}}return L()}for(var w=i.indexOf(M,W),R=i.indexOf(P,W),C=new RegExp(Q(K)+Q(z),"g"),S=i.indexOf(z,W);;)if(i[W]!==z)if(U&&0===f.length&&i.substring(W,W+a)===U){if(-1===R)return L();W=R+s,R=i.indexOf(P,W),w=i.indexOf(M,W)}else if(-1!==w&&(w<R||-1===R))f.push(i.substring(W,w)),W=w+e,w=i.indexOf(M,W);else{if(-1===R)break;if(f.push(i.substring(W,R)),D(R+s),o&&(F(),H))return L();if(N&&u.length>=N)return L(!0)}else for(S=W,W++;;){if(-1===(S=i.indexOf(z,S+1)))return r||h.push({type:"Quotes",code:"MissingQuotes",message:"Quoted field unterminated",row:u.length,index:W}),T();if(S===n-1)return T(i.substring(W,S).replace(C,z));if(z!==K||i[S+1]!==K){if(z===K||0===S||i[S-1]!==K){-1!==w&&w<S+1&&(w=i.indexOf(M,S+1)),-1!==R&&R<S+1&&(R=i.indexOf(P,S+1));var O=A(-1===R?w:Math.min(w,R));if(i.substr(S+1+O,e)===M){f.push(i.substring(W,S).replace(C,z)),i[W=S+1+O+e]!==z&&(S=i.indexOf(z,W)),w=i.indexOf(M,W),R=i.indexOf(P,W);break}var x=A(R);if(i.substring(S+1+x,S+1+x+s)===P){if(f.push(i.substring(W,S).replace(C,z)),D(S+1+x+s),w=i.indexOf(M,W),S=i.indexOf(z,W),o&&(F(),H))return L();if(N&&u.length>=N)return L(!0);break}h.push({type:"Quotes",code:"InvalidQuotes",message:"Trailing quote on quoted field is malformed",row:u.length,index:W}),S++}}else S++}return T();function I(e){u.push(e),d=W}function A(e){var t=0;if(-1!==e){var r=i.substring(S+1,e);r&&""===r.trim()&&(t=r.length)}return t}function T(e){return r||(void 0===e&&(e=i.substring(W)),f.push(e),W=n,I(f),o&&F()),L()}function D(e){W=e,I(f),f=[],R=i.indexOf(P,W)}function L(e){return{data:u,errors:h,meta:{delimiter:M,linebreak:P,aborted:H,truncated:!!e,cursor:d+(t||0)}}}function F(){q(L()),u=[],h=[]}},this.abort=function(){H=!0},this.getCharIndex=function(){return W}}function _(e){var t=e.data,r=a[t.workerId],i=!1;if(t.error)r.userError(t.error,t.file);else if(t.results&&t.results.data){var n={abort:function(){i=!0,m(t.workerId,{data:[],errors:[],meta:{aborted:!0}})},pause:y,resume:y};if(J(r.userStep)){for(var s=0;s<t.results.data.length&&(r.userStep({data:t.results.data[s],errors:t.results.errors,meta:t.results.meta},n),!i);s++);delete t.results}else J(r.userChunk)&&(r.userChunk(t.results,n,t.file),delete t.results)}t.finished&&!i&&m(t.workerId,t.results)}function m(e,t){var r=a[e];J(r.userComplete)&&r.userComplete(t),r.terminate(),delete a[e]}function y(){throw new Error("Not implemented.")}function w(e){if("object"!=typeof e||null===e)return e;var t=Array.isArray(e)?[]:{};for(var r in e)t[r]=w(e[r]);return t}function v(e,t){return function(){e.apply(t,arguments)}}function J(e){return"function"==typeof e}return o&&(f.onmessage=function(e){var t=e.data;void 0===b.WORKER_ID&&t&&(b.WORKER_ID=t.workerId);if("string"==typeof t.input)f.postMessage({workerId:b.WORKER_ID,results:b.parse(t.input,t.config),finished:!0});else if(f.File&&t.input instanceof File||t.input instanceof Object){var r=b.parse(t.input,t.config);r&&f.postMessage({workerId:b.WORKER_ID,results:r,finished:!0})}}),(l.prototype=Object.create(h.prototype)).constructor=l,(c.prototype=Object.create(h.prototype)).constructor=c,(p.prototype=Object.create(p.prototype)).constructor=p,(g.prototype=Object.create(h.prototype)).constructor=g,b});
+</script>
+<script>
+
+/* ═══════════════════════════════════════════════════════════
+   STATE
+═══════════════════════════════════════════════════════════ */
+let quizData  = [];
+let userAnswers = [];
+let submitted = false;
+let quizType = 'movies'; // 'movies' | 'tv' | 'games'
+
+const WORKER_URL  = "https://quiz-ai.cmcclea117.workers.dev";
+const APP_SECRET  = "cq-sk-4Kv9mXpL2nRjT7wQdF8hZaY3bE5uC1sW";
+
+const TMDB_BASE   = `${WORKER_URL}/tmdb`;
+const TMDB_IMG    = "https://image.tmdb.org/t/p/w200";
+const RAWG_BASE   = `${WORKER_URL}/rawg`;
+const GEMINI_URL  = `${WORKER_URL}/gemini`;
+const GIST_URL    = `${WORKER_URL}/gist`;
+const LASTFM_BASE = `${WORKER_URL}/lastfm`;
+
+// Helper: fetch through worker with auth header
+function wfetch(url, options = {}) {
+  return fetch(url, {
+    ...options,
+    headers: {
+      ...(options.headers ?? {}),
+      "X-App-Secret": APP_SECRET,
+    }
+  });
+}
+
+/* ═══════════════════════════════════════════════════════════
+   UTILS
+═══════════════════════════════════════════════════════════ */
+function get(obj, key) {
+  // Match header regardless of embedded newlines (original SurveyMonkey export) or flat (our template)
+  const normalize = s => s.replace(/\r?\n/g, " ").trim();
+  const k = Object.keys(obj).find(k => normalize(k) === normalize(key));
+  return k ? obj[k] : undefined;
+}
+
+function isCorrect(val) {
+  const v = String(val ?? "").trim().toLowerCase().replace(/[^a-z0-9]/g, "");
+  return ["true","1","yes","x","correct"].includes(v);
+}
+
+function shuffle(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+}
+
+function setStatus(type, msg) {
+  const el = document.getElementById("status");
+  el.className = "status " + type;
+  el.style.display = type ? "flex" : "none";
+  if (type === "loading") {
+    el.innerHTML = `<div class="spinner"></div><span>${msg}</span>`;
+  } else {
+    const icon = type === "error" ? "✕" : "✓";
+    el.innerHTML = `<span>${icon} ${msg}</span>`;
+    if (type !== "error") setTimeout(() => { el.style.display = "none"; }, 4000);
+  }
+}
+
+function toast(msg) {
+  const t = document.getElementById("toast");
+  t.textContent = msg;
+  t.classList.add("show");
+  setTimeout(() => t.classList.remove("show"), 2200);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   THEME TOGGLE
+═══════════════════════════════════════════════════════════ */
+function toggleTheme() {
+  const isLight = document.body.classList.toggle('light');
+  const btn = document.getElementById('themeBtn');
+  btn.textContent = isLight ? '🌙' : '☀️';
+  localStorage.setItem('cq-theme', isLight ? 'light' : 'dark');
+}
+
+(function() {
+  if (localStorage.getItem('cq-theme') === 'light') {
+    document.body.classList.add('light');
+    document.addEventListener('DOMContentLoaded', () => {
+      const btn = document.getElementById('themeBtn');
+      if (btn) btn.textContent = '🌙';
+    });
+  }
+})();
+
+/* ═══════════════════════════════════════════════════════════
+   DEV MODE (click eyebrow 5x)
+═══════════════════════════════════════════════════════════ */
+let devClickCount = 0;
+function devClick() {
+  devClickCount++;
+  if (devClickCount >= 5) {
+    devClickCount = 0;
+    const panels = document.querySelectorAll('.dev-panel');
+    const isShown = panels[0]?.style.display === 'block';
+    panels.forEach(p => p.style.display = isShown ? 'none' : 'block');
+    toast(isShown ? 'Dev mode off' : '🔧 Dev mode on');
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   MODE TOGGLE
+═══════════════════════════════════════════════════════════ */
+function switchMode(mode) {
+  const isCreate = mode === 'create';
+  document.getElementById('creatorSection').style.display = isCreate ? 'block' : 'none';
+  document.getElementById('importSection').style.display  = isCreate ? 'none' : 'block';
+  document.getElementById('modeCreate').className = isCreate ? 'primary' : '';
+  document.getElementById('modeImport').className = isCreate ? '' : 'primary';
+}
+
+/* ═══════════════════════════════════════════════════════════
+   CREATOR FORM
+═══════════════════════════════════════════════════════════ */
+function getCreatorQuestions() {
+  const MOVIE_Q = [
+    "What is my favorite movie?","Who is my favorite director?","Which is my favorite screenplay?",
+    "Which film has my favorite cinematography?","Which film has my favorite ending?",
+    "Which movie do I think is overhated?","Which movie do I think is underrated?",
+    "Which movie do I think is overrated?","Which movie do I think needs a sequel?",
+    "Which movie do I consider criminally overlooked?","Who is my favorite actor (specific performance)?",
+    "Who is my favorite actress (specific performance)?","Which film has the best score in my opinion?",
+    "Which movie has the best songs in my opinion?","Which movie fits not usually my thing but I love it?",
+    "Which movie is just so much fun?","Whats the best movie to watch with friends?",
+    "What is the best old movie in my opinion?","What is my favorite long movie 3 or more hours?",
+    "Which movie do I think everyone should watch?","Who is my favorite movie villain?",
+    "Who is my favorite movie character of all time?","Who is my favorite comedic performance in a film?",
+    "What is my favorite animated movie?","Which film has my favorite ensemble cast?",
+    "Which film has my favorite opening scene?","Which film has my favorite plot twist?",
+    "Which film has my favorite single scene?","Which film has my favorite monologue?",
+    "What is my favorite horror movie?","What is my favorite sci-fi movie?",
+    "What is my favorite action movie?","What is my favorite comedy?",
+    "What is my favorite foreign language film?","What is my favorite documentary?",
+    "What is my favorite sports movie?","Which movie made me cry the most?",
+    "Which movie scared me the most?","Which movie made me laugh the hardest?",
+    "Which movie do I wish I could watch for the first time again?","What is my biggest guilty pleasure movie?",
+    "Which movie did I see too young?","Which film has my favorite production design?",
+    "Which film has my favorite costume design?","Which film has my favorite visual effects?",
+    "What is my favorite movie based on a true story?","What is my favorite sequel that is better than the original?",
+    "Which movie do I think has the worst ending?","Which film has my favorite final act?",
+    "Which movie do I think everyone should watch at least once?",
+    "Which movie would I never turn off if it came on TV?"
+  ];
+  const TV_Q = [
+    "What is my favorite TV show of all time?","Who is my favorite TV showrunner?",
+    "What is my favorite TV drama?","What is my favorite TV comedy?",
+    "Who is my favorite TV villain?","Who is my favorite TV character of all time?",
+    "Which TV show do I think is overrated?","Which TV show do I think is underrated?",
+    "Which TV show do I think was cancelled too soon?","Which TV show do I think went on too long?",
+    "Which TV show has my favorite series finale?","Which TV show has my favorite pilot episode?",
+    "Which TV show has my favorite theme song?","Which TV show do I consider criminally overlooked?",
+    "What is my favorite limited series or miniseries?","Which TV show is just so much fun?",
+    "Which TV show fits not usually my thing but I love it?","What is the best old TV show in my opinion?",
+    "Which TV show do I think everyone should watch?","Which TV show do I most want to rewatch from the beginning?"
+  ];
+  const GAME_Q = [
+    "What is my favorite video game of all time?","Which game has my favorite story?",
+    "Which game has my favorite art style?","Which game has had the biggest personal impact on me?",
+    "Which game has the best combat in my opinion?","Which game do I think is overhated?",
+    "Which game do I think is underrated?","Which game do I think is overrated?",
+    "Which game do I think needs a remake?","Which game do I consider criminally overlooked?",
+    "Which game has my favorite protagonist?","Which game has my favorite antagonist or villain?",
+    "Which game has my favorite soundtrack?","What is my favorite multiplayer game?",
+    "Which game fits not usually my thing but I love it?","Which game do I play to turn my brain off?",
+    "What is the best game to play with friends?","What is my favorite retro game?",
+    "What is my most nostalgic childhood game?","Which game do I think everyone should play?"
+  ];
+  const MUSIC_Q = [
+    "What is my favorite album of all time?",
+    "Who is my favorite artist or band?",
+    "What is my favorite song of all time?",
+    "Which album has my favorite opening track?",
+    "Which album has my favorite closing track?",
+    "Which album has the best cover art in my opinion?",
+    "Which artist do I think is overrated?",
+    "Which artist do I think is underrated?",
+    "Which album do I consider criminally overlooked?",
+    "Which artist do I think everyone should listen to?",
+    "What is my favorite live album or concert recording?",
+    "Which album do I think has no skips?",
+    "What is my favorite debut album?",
+    "Which artist has my favorite discography overall?",
+    "What is my favorite guilty pleasure song or artist?",
+    "Which album fits not usually my thing but I love it?",
+    "What is my most nostalgic album or song?",
+    "Which artist do I wish I could see live?",
+    "What is my favorite song to play loud in the car?",
+    "Which album do I think everyone should hear at least once?",
+    "What is my favorite genre of music to listen to in the gym?",
+    "What is my most hated music genre?",
+    "Which song has had the biggest impact on my life?"
+  ];
+  return quizType === 'tv' ? TV_Q : quizType === 'games' ? GAME_Q : quizType === 'music' ? MUSIC_Q : MOVIE_Q;
+}
+
+function renderCreatorForm() {
+  // Sync type buttons
+  ['Movies','TV','Games'].forEach(t => {
+    const id = 'ctype' + t;
+    const btn = document.getElementById(id);
+    if (btn) btn.className = (t.toLowerCase() === quizType || (t === 'TV' && quizType === 'tv')) ? 'primary' : '';
+  });
+  // Fix ctype button logic
+  document.getElementById('ctypeMovies').className = quizType === 'movies' ? 'primary' : '';
+  document.getElementById('ctypeTV').className     = quizType === 'tv'     ? 'primary' : '';
+  document.getElementById('ctypeGames').className  = quizType === 'games'  ? 'primary' : '';
+
+  const questions = getCreatorQuestions();
+  const form = document.getElementById('creatorForm');
+  form.innerHTML = questions.map((q, i) => `
+    <div class="creator-row">
+      <div class="creator-question">${q}</div>
+      <input class="creator-input" placeholder="Your answer…" id="ca_${i}" autocomplete="off">
+      <input class="creator-input" placeholder="e.g. Show or film name" id="ch_${i}" autocomplete="off">
+    </div>
+  `).join('');
+}
+
+/* ═══════════════════════════════════════════════════════════
+   BUILD FROM CREATOR
+═══════════════════════════════════════════════════════════ */
+window.buildFromCreator = async function() {
+  const questions = getCreatorQuestions();
+  const base = [];
+
+  questions.forEach((q, i) => {
+    const answer = document.getElementById(`ca_${i}`)?.value.trim();
+    const hint   = document.getElementById(`ch_${i}`)?.value.trim();
+    if (!answer) return; // skip blank questions
+
+    base.push({
+      id: `q${i}_${Math.random().toString(36).slice(2,6)}`,
+      question: q,
+      options: [{
+        id: `q${i}_o0_${Math.random().toString(36).slice(2,6)}`,
+        text: answer,
+        correct: true,
+        searchHint: hint || null
+      }]
+    });
+  });
+
+  if (!base.length) return setStatus("error", "Fill in at least one answer first.");
+
+  const creatorName = document.getElementById("creatorName")?.value.trim() || null;
+
+  // Switch to quiz area and run the same enrichment pipeline
+  document.getElementById('creatorSection').style.display = 'none';
+
+  const enrichEl = document.getElementById("enrichProgress");
+  const fillEl   = document.getElementById("progressFill");
+  const labelEl  = document.getElementById("enrichLabel");
+  enrichEl.style.display = "block";
+  setStatus("loading", `Building quiz from ${base.length} answer(s)…`);
+
+  // Step 1: Generate wrong answers sequentially with delay to avoid rate limiting
+  labelEl.textContent = `Generating wrong answers for ${base.length} question(s)…`;
+  fillEl.style.width = "5%";
+
+  for (let i = 0; i < base.length; i++) {
+    const q = base[i];
+    const correct = q.options[0];
+    labelEl.textContent = `Generating wrong answers… (${i + 1}/${base.length})`;
+
+    let generated = [];
+    let attempts = 0;
+    while (attempts < 3) {
+      generated = await generateWrongAnswers(q.question, correct.text);
+      if (generated.length > 0) break;
+      // If empty (likely 429), wait and retry
+      attempts++;
+      if (attempts < 3) {
+        labelEl.textContent = `Rate limited — retrying ${i + 1}/${base.length} in 15s…`;
+        await new Promise(r => setTimeout(r, 15000));
+      }
+    }
+
+    const newOpts = generated.map((text, oi) => ({
+      id: `${q.id}_gen${oi}_${Math.random().toString(36).slice(2,6)}`,
+      text, correct: false, aiGenerated: true
+    }));
+    q.options = [correct, ...newOpts];
+    fillEl.style.width = `${5 + Math.round(((i + 1) / base.length) * 20)}%`;
+
+    // Small delay between requests to stay under per-minute limit
+    if (i < base.length - 1) await new Promise(r => setTimeout(r, 2500));
+  }
+
+  // Step 2: TMDB/RAWG enrichment
+  const total = base.flatMap(q => q.options).length;
+  let done = 0;
+  for (const q of base) {
+    q.options = await Promise.all(q.options.map(async opt => {
+      const enriched = await enrichOption(opt);
+      done++;
+      fillEl.style.width = `${25 + Math.round((done / total) * 75)}%`;
+      labelEl.textContent = `Fetching images… (${done}/${total})`;
+      return enriched;
+    }));
+    shuffle(q.options);
+  }
+
+  enrichEl.style.display = "none";
+  fillEl.style.width = "0%";
+
+  quizData = base;
+  quizData.creatorName = creatorName;
+  shuffle(quizData);
+  document.getElementById("exportJsonBtn").disabled = false;
+  document.getElementById("gistBtn").disabled = false;
+  setStatus("success", `Quiz built with ${quizData.length} questions!`);
+  renderQuiz();
+};
+
+/* ═══════════════════════════════════════════════════════════
+   QUIZ TYPE
+═══════════════════════════════════════════════════════════ */
+function toggleInstructions() {
+  const body = document.getElementById("instructionsBody");
+  const chevron = document.getElementById("instructionsChevron");
+  const isOpen = body.style.display !== "none";
+  body.style.display = isOpen ? "none" : "block";
+  chevron.style.transform = isOpen ? "rotate(-90deg)" : "rotate(0deg)";
+}
+
+function setQuizType(type) {
+  quizType = type;
+  const idMap = { movies: 'typeMovies', tv: 'typeTV', games: 'typeGames', music: 'typeMusic' };
+  const cidMap = { movies: 'ctypeMovies', tv: 'ctypeTV', games: 'ctypeGames', music: 'ctypeMusic' };
+  ['movies','tv','games','music'].forEach(t => {
+    const btn  = document.getElementById(idMap[t]);
+    const cbtn = document.getElementById(cidMap[t]);
+    if (btn)  btn.className  = t === type ? 'primary' : '';
+    if (cbtn) cbtn.className = t === type ? 'primary' : '';
+  });
+  document.getElementById('rawgKeyWrap').style.display = 'none';
+}
+
+/* ═══════════════════════════════════════════════════════════
+   AUTO-LOAD FROM URL PARAM  (?quiz=https://...)
+═══════════════════════════════════════════════════════════ */
+window.addEventListener("DOMContentLoaded", () => {
+  renderCreatorForm();
+  const params  = new URLSearchParams(window.location.search);
+  const quizURL = params.get("quiz");
+  if (quizURL) {
+    switchMode('import');
+    document.getElementById("jsonUrlInput").value = quizURL;
+    loadFromURL();
+  }
+});
+
+/* ═══════════════════════════════════════════════════════════
+   CSV → JSON
+═══════════════════════════════════════════════════════════ */
+function convertCSVToQuiz(raw) {
+  return raw
+    .filter(q => q["Question Text"] && get(q, "Question Type")?.includes("Single Choice"))
+    .map((q, qi) => {
+      const options = [1,2,3,4,5,6,7,8,9,10]
+        .map(n => ({
+          text:      get(q, `Option ${n} Text`),
+          correct:   isCorrect(get(q, `Option ${n} Correct`)),
+          searchHint: (get(q, `Option ${n} Search Hint`) || "").trim()
+        }))
+        .filter(o => o.text && o.text.trim())
+        .map((o, oi) => ({
+          id:         `q${qi}_o${oi}_${Math.random().toString(36).slice(2,6)}`,
+          text:       o.text.trim(),
+          correct:    o.correct,
+          searchHint: o.searchHint || null
+        }));
+
+      return {
+        id: `q${qi}_${Math.random().toString(36).slice(2,6)}`,
+        question: get(q, "Question Text"),
+        options
+      };
+    });
+}
+
+/* ═══════════════════════════════════════════════════════════
+   AI WRONG ANSWER GENERATION
+═══════════════════════════════════════════════════════════ */
+async function generateWrongAnswers(question, correctAnswer) {
+  const typeLabel = quizType === 'tv' ? 'TV show' : quizType === 'games' ? 'video game' : quizType === 'music' ? 'music artist or album' : 'movie';
+  const hasActorFormat = /\(.+\)/.test(correctAnswer);
+
+  const isGenre = /genre/i.test(question);
+
+  const formatInstruction = isGenre
+    ? `The correct answer is a music genre. Generate 3 other real music genres as wrong answers. Do NOT generate artist names, album titles, or song titles — only genre names.`
+    : hasActorFormat
+    ? `IMPORTANT: The correct answer uses the format "Character Name (Actor Name)". Return all 3 wrong answers in the exact same format — e.g. "Walter White (Bryan Cranston)". Pick characters from DIFFERENT shows — do not use the same show more than once.`
+    : `Only use real, actually existing ${typeLabel}s. Do NOT invent fake titles. Pick from different franchises or creators — do not cluster around the same show, series, or universe.`;
+
+  const prompt = `Generate exactly 3 wrong answer options for this quiz question about ${typeLabel}s.
+Question: "${question}"
+Correct answer: "${correctAnswer}"
+Rules:
+- ${formatInstruction}
+- Same category/type as the correct answer
+- Similar era, genre, or style — make them feel like plausible alternatives
+- Do NOT include the correct answer
+- Do NOT number them or explain
+Return ONLY a JSON array of 3 strings. Example: ["Option A", "Option B", "Option C"]`;
+
+  // Check if dev Anthropic override is filled in
+  const anthropicKey = document.getElementById("anthropicKey")?.value?.trim();
+
+  try {
+    if (anthropicKey) {
+      // Dev override: use Anthropic
+      const res = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-api-key": anthropicKey,
+          "anthropic-version": "2023-06-01",
+          "anthropic-dangerous-direct-browser-access": "true"
+        },
+        body: JSON.stringify({
+          model: "claude-sonnet-4-20250514",
+          max_tokens: 500,
+          messages: [{ role: "user", content: prompt }]
+        })
+      });
+      const data = await res.json();
+      const text = data.content?.[0]?.text ?? "[]";
+      const parsed = JSON.parse(text.replace(/```json|```/g, "").trim());
+      return Array.isArray(parsed) ? parsed.slice(0, 3) : [];
+    }
+
+    // Default: use Gemini
+    const res = await wfetch(GEMINI_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: prompt }] }],
+        generationConfig: { maxOutputTokens: 500, temperature: 0.7 }
+      })
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      console.error("Gemini error:", res.status, err);
+      throw new Error(`Gemini ${res.status}: ${err?.error?.message ?? "unknown error"}`);
+    }
+
+    const data = await res.json();
+    const raw = data.candidates?.[0]?.content?.parts?.[0]?.text ?? "";
+    console.log("Gemini full response:", JSON.stringify(data));
+    console.log("Gemini raw text:", raw);
+
+    // Strip any markdown fences and extract the JSON array
+    const jsonMatch = raw.match(/\[[\s\S]*\]/);
+    if (!jsonMatch) throw new Error("No JSON array found in Gemini response");
+    const parsed = JSON.parse(jsonMatch[0]);
+    return Array.isArray(parsed) ? parsed.slice(0, 3) : [];
+  } catch(e) {
+    console.error("generateWrongAnswers failed:", e);
+    setStatus("error", `AI generation failed: ${e.message}. Check console for details.`);
+    return [];
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   TMDB ENRICHMENT
+═══════════════════════════════════════════════════════════ */
+async function enrichOption(opt) {
+  // Priority: explicit searchHint → actor/detail in parentheses → full option text
+  const parenMatch = opt.text.match(/\(([^)]+)\)/);
+  const query = (opt.searchHint || (parenMatch ? parenMatch[1] : opt.text)).trim();
+
+  // Only show "Known for" when option is a person/character type
+  const isPersonType = !!(opt.searchHint || parenMatch);
+
+  try {
+    if (quizType === 'music') {
+      // Skip image lookup entirely for genre questions
+      if (/genre/i.test(opt.searchHint || '') || /genre/i.test(opt.text || '')) {
+        return { ...opt, resultType: "music", image: null, knownFor: null };
+      }
+      const parenArtist = opt.text.match(/\(([^)]+)\)/);
+      const artistHint  = opt.searchHint || (parenArtist ? parenArtist[1] : null);
+      const trackName   = opt.text.replace(/\(.*?\)/g, "").trim();
+
+      // Try album search first, then artist
+      const searchRes = await wfetch(
+        `${LASTFM_BASE}?method=album.search&album=${encodeURIComponent(trackName)}&limit=1`
+      ).then(r => r.json());
+
+      const album = searchRes?.results?.albummatches?.album?.[0];
+
+      // If we have an artist hint or paren format, search by artist instead
+      if (artistHint && (!album || album.artist.toLowerCase() !== artistHint.toLowerCase())) {
+        const artistRes = await wfetch(
+          `${LASTFM_BASE}?method=artist.getinfo&artist=${encodeURIComponent(artistHint)}&limit=1`
+        ).then(r => r.json());
+
+        const image = artistRes?.artist?.image?.find(i => i.size === "large")?.["#text"] || null;
+        return {
+          ...opt,
+          resultType: isPersonType ? "person" : "music",
+          image: image || null,
+          knownFor: isPersonType ? artistHint : null
+        };
+      }
+
+      // Use album art
+      const image = album?.image?.find(i => i.size === "large")?.["#text"] || null;
+      return {
+        ...opt,
+        resultType: isPersonType ? "person" : "music",
+        image: image || null,
+        knownFor: isPersonType ? (album?.artist || null) : null
+      };
+    }
+
+    if (quizType === 'games') {
+      const res = await wfetch(
+        `${RAWG_BASE}/games?search=${encodeURIComponent(query)}&page_size=1`
+      ).then(r => r.json());
+      const game = res.results?.[0];
+      return { ...opt, resultType: "game", image: game?.background_image || null, knownFor: null };
+    }
+
+    if (quizType === 'tv') {
+      const [tvRes, personRes] = await Promise.all([
+        wfetch(`${TMDB_BASE}/search/tv?query=${encodeURIComponent(query)}`).then(r => r.json()),
+        wfetch(`${TMDB_BASE}/search/person?query=${encodeURIComponent(query)}`).then(r => r.json())
+      ]);
+      const show   = tvRes.results?.[0];
+      const person = personRes.results?.[0];
+      const useShow = show && (!person || (show.popularity ?? 0) >= (person.popularity ?? 0));
+      if (useShow) {
+        return {
+          ...opt,
+          resultType: isPersonType ? "person" : "tv",
+          image:    show.poster_path ? `${TMDB_IMG}${show.poster_path}` : null,
+          knownFor: isPersonType ? (show.name || null) : null
+        };
+      }
+      if (!person) return opt;
+      const full = await wfetch(
+        `${TMDB_BASE}/person/${person.id}?append_to_response=tv_credits`
+      ).then(r => r.json());
+      // Filter out guest appearances (≤2 episodes) before sorting by popularity
+      const topShow = (full.tv_credits?.cast ?? [])
+        .filter(s => (s.episode_count ?? 99) > 2)
+        .sort((a, b) => (b.popularity ?? 0) - (a.popularity ?? 0))[0];
+      return {
+        ...opt,
+        resultType: "person",
+        image:    topShow?.poster_path ? `${TMDB_IMG}${topShow.poster_path}` : null,
+        knownFor: isPersonType ? (topShow?.name || null) : null
+      };
+    }
+
+    // Movies (default)
+    const [movieRes, personRes] = await Promise.all([
+      wfetch(`${TMDB_BASE}/search/movie?query=${encodeURIComponent(query)}`).then(r => r.json()),
+      wfetch(`${TMDB_BASE}/search/person?query=${encodeURIComponent(query)}`).then(r => r.json())
+    ]);
+    const movie  = movieRes.results?.[0];
+    const person = personRes.results?.[0];
+    const useMovie = movie && (!person || (movie.popularity ?? 0) >= (person.popularity ?? 0));
+    if (useMovie) {
+      return {
+        ...opt,
+        resultType: isPersonType ? "person" : "movie",
+        image:    movie.poster_path ? `${TMDB_IMG}${movie.poster_path}` : null,
+        knownFor: isPersonType ? (movie.title || null) : null
+      };
+    }
+    if (!person) return opt;
+    const full = await wfetch(
+      `${TMDB_BASE}/person/${person.id}?append_to_response=movie_credits`
+    ).then(r => r.json());
+    const topMovie = (full.movie_credits?.cast ?? [])
+      .sort((a, b) => (b.popularity ?? 0) - (a.popularity ?? 0))[0];
+    return {
+      ...opt,
+      resultType: "person",
+      image:    topMovie?.poster_path ? `${TMDB_IMG}${topMovie.poster_path}` : null,
+      knownFor: isPersonType ? (topMovie?.title || null) : null
+    };
+  } catch {
+    return opt;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   LOAD CSV
+═══════════════════════════════════════════════════════════ */
+window.loadCSV = async function() {
+  const file = document.getElementById("csvFile").files[0];
+  if (!file) return setStatus("error", "Choose a CSV file first.");
+
+  setStatus("loading", "Parsing CSV…");
+
+  Papa.parse(file, {
+    header: true,
+    skipEmptyLines: true,
+    transformHeader: h => h.replace(/\r?\n/g, " ").trim(),
+    complete: async (results) => {
+      const raw = results.data;
+      const base = convertCSVToQuiz(raw);
+
+      if (!base.length) {
+        return setStatus("error", "No valid Single Choice questions found in CSV.");
+      }
+
+      // Enrichment with progress
+      const enrichEl = document.getElementById("enrichProgress");
+      const fillEl   = document.getElementById("progressFill");
+      const labelEl  = document.getElementById("enrichLabel");
+      enrichEl.style.display = "block";
+
+      // Step 1: AI wrong answer generation — sequential with delay to avoid rate limiting
+      const needsGeneration = base.filter(q => q.options.length === 1 && q.options[0].correct);
+      if (needsGeneration.length) {
+        labelEl.textContent = `Generating wrong answers for ${needsGeneration.length} question(s)…`;
+        fillEl.style.width = "5%";
+
+        for (let i = 0; i < needsGeneration.length; i++) {
+          const q = needsGeneration[i];
+          const correct = q.options[0];
+          labelEl.textContent = `Generating wrong answers… (${i + 1}/${needsGeneration.length})`;
+
+          let generated = [];
+          let attempts = 0;
+          while (attempts < 3) {
+            generated = await generateWrongAnswers(q.question, correct.text);
+            if (generated.length > 0) break;
+            attempts++;
+            if (attempts < 3) {
+              labelEl.textContent = `Rate limited — retrying in 15s…`;
+              await new Promise(r => setTimeout(r, 15000));
+            }
+          }
+
+          const newOpts = generated.map((text, oi) => ({
+            id: `${q.id}_gen${oi}_${Math.random().toString(36).slice(2,6)}`,
+            text, correct: false, aiGenerated: true
+          }));
+          q.options = [correct, ...newOpts];
+          fillEl.style.width = `${5 + Math.round(((i + 1) / needsGeneration.length) * 20)}%`;
+
+          if (i < needsGeneration.length - 1) await new Promise(r => setTimeout(r, 2500));
+        }
+      }
+
+      // Step 2: TMDB enrichment for all options
+      const allOptions = base.flatMap(q => q.options);
+      const total = allOptions.length;
+      let done = 0;
+
+      // Enrich per-question (options in parallel, questions sequential to stay nice to TMDB)
+      for (const q of base) {
+        q.options = await Promise.all(q.options.map(async opt => {
+          const enriched = await enrichOption(opt);
+          done++;
+          fillEl.style.width = `${25 + Math.round((done / total) * 75)}%`;
+          labelEl.textContent = `Fetching TMDB data… (${done}/${total})`;
+          return enriched;
+        }));
+        shuffle(q.options);
+      }
+
+      enrichEl.style.display = "none";
+      fillEl.style.width = "0%";
+
+      quizData = base;
+      shuffle(quizData);
+
+      document.getElementById("exportJsonBtn").disabled = false;
+      document.getElementById("gistBtn").disabled = false;
+      setStatus("success", `Loaded ${quizData.length} questions from "${file.name}"`);
+      renderQuiz();
+    }
+  });
+};
+
+document.getElementById("csvFile").addEventListener("change", function() {
+  const name = this.files[0]?.name;
+  document.getElementById("fileName").textContent = name ? `Selected: ${name}` : "";
+});
+
+/* ═══════════════════════════════════════════════════════════
+   LOAD FROM URL
+═══════════════════════════════════════════════════════════ */
+window.loadFromURL = async function() {
+  const url = document.getElementById("jsonUrlInput").value.trim();
+  if (!url) return setStatus("error", "Paste a JSON URL first.");
+
+  setStatus("loading", "Fetching quiz…");
+
+  try {
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const raw = await res.json();
+
+    // Support both old format (array) and new format ({creatorName, questions})
+    let questions, creatorName;
+    if (Array.isArray(raw)) {
+      questions = raw;
+      creatorName = null;
+    } else {
+      questions = raw.questions ?? [];
+      creatorName = raw.creatorName ?? null;
+    }
+
+    if (!questions.length) throw new Error("Invalid quiz format");
+
+    quizData = questions;
+    quizData.creatorName = creatorName;
+    shuffle(quizData);
+    document.getElementById("exportJsonBtn").disabled = false;
+    document.getElementById("gistBtn").disabled = false;
+    setStatus("success", `Loaded ${quizData.length} questions from URL`);
+    renderQuiz();
+  } catch (e) {
+    setStatus("error", `Could not load quiz: ${e.message}`);
+  }
+};
+
+/* ═══════════════════════════════════════════════════════════
+   GENERATE SHARE LINK
+═══════════════════════════════════════════════════════════ */
+window.generateShareLink = function() {
+  const jsonURL = document.getElementById("jsonUrlInput").value.trim();
+  if (!jsonURL) return setStatus("error", "Paste your hosted JSON URL first, then generate a share link.");
+
+  const base = window.location.href.split("?")[0];
+  const link = `${base}?quiz=${encodeURIComponent(jsonURL)}`;
+
+  document.getElementById("shareLink").value = link;
+  document.getElementById("linkOutput").style.display = "block";
+};
+
+window.copyLink = function() {
+  const val = document.getElementById("shareLink").value;
+  navigator.clipboard.writeText(val).then(() => toast("Link copied!")).catch(() => {
+    document.getElementById("shareLink").select();
+    document.execCommand("copy");
+    toast("Copied!");
+  });
+};
+
+/* ═══════════════════════════════════════════════════════════
+   RENDER QUIZ
+═══════════════════════════════════════════════════════════ */
+function renderQuiz() {
+  submitted = false;
+  userAnswers = [];
+
+  document.getElementById("scoreBanner").style.display = "none";
+  document.getElementById("postSubmitActions").style.display = "none";
+  document.getElementById("submitBtn").disabled = false;
+  document.getElementById("submitBtn").style.display = "";
+
+  // Show creator name banner if present
+  const name = quizData.creatorName;
+  let nameBanner = document.getElementById("creatorNameBanner");
+  if (!nameBanner) {
+    nameBanner = document.createElement("div");
+    nameBanner.id = "creatorNameBanner";
+    nameBanner.style.cssText = "text-align:center;margin-bottom:20px;";
+    document.getElementById("quizArea").prepend(nameBanner);
+  }
+  if (name) {
+    nameBanner.innerHTML = `
+      <div style="font-size:11px;letter-spacing:0.15em;text-transform:uppercase;color:var(--gold-dim);font-weight:600;margin-bottom:4px;">You're taking</div>
+      <div style="font-family:var(--font-display);font-size:1.4rem;font-style:italic;color:var(--cream);">How well do you know <span style="color:var(--gold);">${name}</span>?</div>
+    `;
+    nameBanner.style.display = "block";
+  } else {
+    nameBanner.style.display = "none";
+  }
+
+  const form = document.getElementById("quizForm");
+  form.innerHTML = "";
+
+  quizData.forEach((q, i) => {
+    const div = document.createElement("div");
+    div.className = "question";
+    div.dataset.index = i;
+
+    let html = `
+      <div class="question-number">Question ${i + 1}</div>
+      <div class="question-text">${q.question}</div>
+      <div class="options-grid">
+    `;
+
+    q.options.forEach(opt => {
+      const img = opt.image
+        ? `<img class="option-poster" src="${opt.image}" alt="" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">`
+        : '';
+      const placeholder = `<div class="option-poster-placeholder" style="${opt.image ? 'display:none' : ''}">🎬</div>`;
+      // Only show "Known for" when the result resolved as a person, never for movie titles
+      const knownFor = opt.resultType === "person" && opt.knownFor
+        ? `<div class="option-known-for">Known for: ${opt.knownFor}</div>` : '';
+
+      html += `
+        <label class="option-label">
+          <input type="radio" name="q${i}" value="${opt.id}">
+          <div class="radio-dot"></div>
+          ${img}${placeholder}
+          <div class="option-info">
+            <div class="option-text">${opt.text}</div>
+            ${knownFor}
+          </div>
+        </label>
+      `;
+    });
+
+    html += `</div>`;
+    div.innerHTML = html;
+    form.appendChild(div);
+  });
+
+  document.getElementById("quizArea").style.display = "block";
+  document.getElementById("quizArea").scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+/* ═══════════════════════════════════════════════════════════
+   SUBMIT
+═══════════════════════════════════════════════════════════ */
+window.submitQuiz = function() {
+  if (submitted) return;
+  submitted = true;
+
+  let score = 0;
+  userAnswers = [];
+
+  document.querySelectorAll(".question").forEach((div, i) => {
+    div.classList.remove("correct", "incorrect");
+
+    const q = quizData[i];
+    const selected = div.querySelector("input:checked");
+    const selectedId = selected?.value ?? null;
+    userAnswers.push(selectedId);
+
+    const chosenOpt = selectedId ? q.options.find(o => o.id === selectedId) : null;
+    const isRight = chosenOpt?.correct === true;
+
+    if (isRight) { score++; div.classList.add("correct"); }
+    else          { div.classList.add("incorrect"); }
+
+    // disable all radios
+    div.querySelectorAll("input[type=radio]").forEach(r => r.disabled = true);
+
+    // reveal correct answer
+    const correctTexts = q.options.filter(o => o.correct).map(o => o.text).join(" · ");
+    const reveal = document.createElement("div");
+    reveal.className = "answer-reveal";
+    reveal.innerHTML = `<span class="label">Correct Answer</span>${correctTexts}`;
+    div.appendChild(reveal);
+  });
+
+  // Show score banner
+  const banner  = document.getElementById("scoreBanner");
+  const pct     = Math.round((score / quizData.length) * 100);
+  document.getElementById("scoreNumber").textContent = score;
+  document.getElementById("scoreTotal").textContent  = `out of ${quizData.length} — ${pct}%`;
+  banner.style.display = "block";
+  banner.scrollIntoView({ behavior: "smooth", block: "start" });
+
+  document.getElementById("submitBtn").style.display = "none";
+  document.getElementById("postSubmitActions").style.display = "flex";
+  document.getElementById("exportResultsBtn").style.display = "";
+  document.getElementById("resultsCardBtn").style.display = "";
+};
+
+/* ═══════════════════════════════════════════════════════════
+   RESET
+═══════════════════════════════════════════════════════════ */
+window.confirmRetake = function() {
+  if (!confirm("Retake the quiz? Your current answers and score will be cleared.")) return;
+  resetQuiz();
+};
+
+window.resetQuiz = function() {
+  if (!quizData.length) return;
+  shuffle(quizData);
+  renderQuiz();
+};
+
+/* ═══════════════════════════════════════════════════════════
+   PUBLISH TO GIST
+═══════════════════════════════════════════════════════════ */
+window.publishToGist = async function() {
+  if (!quizData.length) return setStatus("error", "Load a quiz first.");
+
+  setStatus("loading", "Publishing to GitHub Gist…");
+
+  try {
+    const res = await wfetch(GIST_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Accept": "application/vnd.github+json",
+      },
+      body: JSON.stringify({
+        description: `CineQuiz${quizData.creatorName ? ` — ${quizData.creatorName}` : ""}`,
+        public: true,
+        files: {
+          "quiz.json": { content: JSON.stringify({ creatorName: quizData.creatorName || null, questions: [...quizData] }, null, 2) }
+        }
+      })
+    });
+
+    if (res.status === 401) throw new Error("Token invalid or expired — check the scopes and try a new one.");
+    if (!res.ok) throw new Error(`GitHub API responded with ${res.status}`);
+    const gist = await res.json();
+
+    const rawUrl = gist.files["quiz.json"].raw_url;
+    document.getElementById("jsonUrlInput").value = rawUrl;
+    setStatus("success", "Published! URL filled in — share link generated below.");
+    generateShareLink();
+
+  } catch (e) {
+    setStatus("error", `Gist publish failed: ${e.message}`);
+  }
+};
+
+/* ═══════════════════════════════════════════════════════════
+   DOWNLOAD RESULTS CARD
+═══════════════════════════════════════════════════════════ */
+window.downloadResultsCard = async function() {
+  const score      = userAnswers.filter((id, i) => quizData[i]?.options.find(o => o.id === id)?.correct).length;
+  const total      = quizData.length;
+  const pct        = Math.round((score / total) * 100);
+  const name       = quizData.creatorName;
+  const isLight    = document.body.classList.contains('light');
+
+  // Collect images: mix correct and incorrect answer images
+  const allImages = [];
+  quizData.forEach((q, i) => {
+    const chosen  = q.options.find(o => o.id === userAnswers[i]);
+    const correct = q.options.find(o => o.correct);
+    // Add correct answer image first, then chosen if different
+    if (correct?.image) allImages.push({ url: correct.image, right: chosen?.correct === true, label: correct.text });
+    else if (chosen?.image) allImages.push({ url: chosen.image, right: chosen?.correct === true, label: chosen.text });
+  });
+
+  // Pick up to 10 images — mix of right and wrong
+  const picked = allImages.slice(0, 10);
+
+  // Load images via worker proxy to avoid CORS canvas taint
+  // (Last.fm and some CDNs don't send CORS headers, which breaks toDataURL)
+  const proxyImg = url => `${WORKER_URL}/imgproxy?url=${encodeURIComponent(url)}`;
+  const loadImg = url => new Promise(resolve => {
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.onload  = () => resolve(img);
+    img.onerror = () => resolve(null);
+    img.src = proxyImg(url);
+  });
+
+  const imgs = await Promise.all(picked.map(p => loadImg(p.url)));
+
+  // Canvas dimensions
+  const W = 900, COLS = 5;
+  const PADDING = 32;
+  const IMG_SIZE = (W - PADDING * 2 - (COLS - 1) * 12) / COLS; // ~156px
+  const ROWS = Math.ceil(picked.length / COLS);
+  const gridH = ROWS * IMG_SIZE + (ROWS - 1) * 12;
+  const H = PADDING + 44 + 16 + (name ? 40 : 0) + 24 + gridH + 24 + 80 + 24 + PADDING;
+
+  const canvas = document.createElement("canvas");
+  canvas.width  = W * 2; // retina
+  canvas.height = H * 2;
+  const ctx = canvas.getContext("2d");
+  ctx.scale(2, 2);
+
+  // Background
+  ctx.fillStyle = isLight ? "#f5f0e8" : "#0d0d0f";
+  ctx.fillRect(0, 0, W, H);
+
+  // Subtle film grain feel — border
+  ctx.strokeStyle = isLight ? "#ddd5c0" : "#2a2a35";
+  ctx.lineWidth = 1;
+  ctx.strokeRect(16, 16, W - 32, H - 32);
+
+  let y = PADDING;
+
+  // Eyebrow
+  ctx.fillStyle = "#c9a84c";
+  ctx.font = "600 11px 'DM Sans', sans-serif";
+  ctx.textAlign = "center";
+  ctx.fillText("★  KNOW YOUR FRIEND  ★", W / 2, y + 14);
+  y += 32;
+
+  // Title
+  if (name) {
+    ctx.fillStyle = isLight ? "#2c2416" : "#f0e8d4";
+    ctx.font = `italic 700 28px Georgia, serif`;
+    ctx.textAlign = "center";
+    ctx.fillText(`How well do you know ${name}?`, W / 2, y + 28);
+    y += 44;
+  }
+
+  // Image grid
+  const gridStartX = PADDING;
+  imgs.forEach((img, idx) => {
+    if (!img) return;
+    const col = idx % COLS;
+    const row = Math.floor(idx / COLS);
+    const x = gridStartX + col * (IMG_SIZE + 12);
+    const iy = y + row * (IMG_SIZE + 12);
+
+    // Rounded clip
+    ctx.save();
+    ctx.beginPath();
+    ctx.roundRect(x, iy, IMG_SIZE, IMG_SIZE, 8);
+    ctx.clip();
+    ctx.drawImage(img, x, iy, IMG_SIZE, IMG_SIZE);
+    ctx.restore();
+
+    // Correct/incorrect overlay badge
+    const isRight = picked[idx].right;
+    ctx.fillStyle = isRight ? "rgba(76,175,106,0.9)" : "rgba(201,76,76,0.9)";
+    ctx.beginPath();
+    ctx.arc(x + IMG_SIZE - 14, iy + 14, 10, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = "#fff";
+    ctx.font = "bold 12px sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText(isRight ? "✓" : "✕", x + IMG_SIZE - 14, iy + 18);
+  });
+
+  y += gridH + 28;
+
+  // Score
+  ctx.textAlign = "center";
+  ctx.fillStyle = "#c9a84c";
+  ctx.font = `bold 64px Georgia, serif`;
+  ctx.fillText(`${score}`, W / 2 - 40, y + 52);
+  ctx.fillStyle = isLight ? "#8a7d68" : "#6b6b80";
+  ctx.font = `300 28px Georgia, serif`;
+  ctx.fillText(`/ ${total}`, W / 2 + 32, y + 52);
+
+  // Percentage
+  ctx.fillStyle = isLight ? "#8a7d68" : "#6b6b80";
+  ctx.font = `400 18px 'DM Sans', sans-serif`;
+  ctx.fillText(`${pct}%`, W / 2, y + 76);
+  y += 96;
+
+  // Footer
+  ctx.fillStyle = isLight ? "#b08030" : "#7a6228";
+  ctx.font = `500 13px 'DM Sans', sans-serif`;
+  ctx.textAlign = "center";
+  ctx.fillText("CineQuiz  ·  Know Your Friend", W / 2, y + 16);
+
+  // Download
+  const link = document.createElement("a");
+  link.download = `cinequiz-results-${name ?? "quiz"}.png`;
+  link.href = canvas.toDataURL("image/png");
+  link.click();
+
+  toast("Results card downloaded!");
+};
+window.exportQuizAsJSON = function() {
+  if (!quizData.length) return setStatus("error", "Load a quiz first.");
+  const payload = [...quizData];
+  payload.creatorName = quizData.creatorName || null;
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+  const url  = URL.createObjectURL(blob);
+  const a    = Object.assign(document.createElement("a"), { href: url, download: "quiz.json" });
+  a.click();
+  URL.revokeObjectURL(url);
+};
+
+/* ═══════════════════════════════════════════════════════════
+   EXPORT RESULTS CSV
+═══════════════════════════════════════════════════════════ */
+window.exportResults = function() {
+  if (!quizData.length) return;
+  let csv = "Question,Your Answer,Correct Answer,Result\n";
+  quizData.forEach((q, i) => {
+    const userText    = q.options.find(o => o.id === userAnswers[i])?.text ?? "No Answer";
+    const correctText = q.options.filter(o => o.correct).map(o => o.text).join(" | ");
+    const result      = userText === correctText ? "Correct" : "Incorrect";
+    csv += `"${q.question}","${userText}","${correctText}","${result}"\n`;
+  });
+  const blob = new Blob([csv], { type: "text/csv" });
+  const url  = URL.createObjectURL(blob);
+  const a    = Object.assign(document.createElement("a"), { href: url, download: "quiz_results.csv" });
+  a.click();
+  URL.revokeObjectURL(url);
+};
+
+/* ═══════════════════════════════════════════════════════════
+   DOWNLOAD TEMPLATE CSV
+═══════════════════════════════════════════════════════════ */
+window.downloadTemplate = function() {
+  const headers = [
+    "Question Text","Question Type","Points Type","Question Points","Page Number",
+    "Required","Question Feedback","Question Categories (separate each category with a comma)",
+    "Randomize Options",
+    "Option 1 Text","Option 1 Correct","Option 1 Points","Option 1 Search Hint",
+    "Option 2 Text","Option 2 Correct","Option 2 Points","Option 2 Search Hint",
+    "Option 3 Text","Option 3 Correct","Option 3 Points","Option 3 Search Hint",
+    "Option 4 Text","Option 4 Correct","Option 4 Points","Option 4 Search Hint"
+  ];
+
+  const MOVIE_QUESTIONS = [
+    ["What is my favorite movie?",                                    "Favorite Movie"],
+    ["Who is my favorite director?",                                  "Favorite Director"],
+    ["Which is my favorite screenplay?",                              "Favorite Screenplay"],
+    ["Which film has my favorite cinematography?",                    "Favorite Cinematography"],
+    ["Which film has my favorite ending?",                            "Favorite Ending"],
+    ["Which movie do I think is overhated?",                          "Overhated Movie"],
+    ["Which movie do I think is underrated?",                         "Underrated Movie"],
+    ["Which movie do I think is overrated?",                          "Overrated Movie"],
+    ["Which movie do I think needs a sequel?",                        "A Movie That Needs a Sequel"],
+    ["Which movie do I consider criminally overlooked?",              "Criminally Overlooked Movie"],
+    ["Who is my favorite actor (specific performance)?",              "Favorite Actor"],
+    ["Who is my favorite actress (specific performance)?",            "Favorite Actress"],
+    ["Which film has the best score in my opinion?",                  "Best Movie Score"],
+    ["Which movie has the best songs in my opinion?",                 "Best Movie Song(s)"],
+    ["Which movie fits not usually my thing but I love it?",          "Not Usually My Thing But I Love It"],
+    ["Which movie is just so much fun?",                              "A Movie That Is Just So Much Fun"],
+    ["Whats the best movie to watch with friends?",                   "Best Movie to Watch With Friends"],
+    ["What is the best old movie in my opinion?",                     "Best Old Movie"],
+    ["What is my favorite long movie 3 or more hours?",               "Best Long Movie 3 Plus Hours"],
+    ["Which movie do I think everyone should watch?",                 "A Movie Everyone Should Watch"],
+    ["Who is my favorite movie villain?",                             "Favorite Movie Villain"],
+    ["Who is my favorite movie character of all time?",               "Favorite Movie Character"],
+    ["Who is my favorite comedic performance in a film?",             "Favorite Comedic Performance"],
+    ["What is my favorite animated movie?",                           "Favorite Animated Movie"],
+    ["Which film has my favorite ensemble cast?",                     "Favorite Ensemble Cast"],
+    ["Which film has my favorite opening scene?",                     "Favorite Opening Scene"],
+    ["Which film has my favorite plot twist?",                        "Favorite Plot Twist"],
+    ["Which film has my favorite single scene?",                      "Favorite Single Scene"],
+    ["Which film has my favorite monologue?",                         "Favorite Movie Monologue"],
+    ["What is my favorite horror movie?",                             "Favorite Horror Movie"],
+    ["What is my favorite sci-fi movie?",                             "Favorite Sci-Fi Movie"],
+    ["What is my favorite action movie?",                             "Favorite Action Movie"],
+    ["What is my favorite comedy?",                                   "Favorite Comedy"],
+    ["What is my favorite foreign language film?",                    "Favorite Foreign Language Film"],
+    ["What is my favorite documentary?",                              "Favorite Documentary"],
+    ["What is my favorite sports movie?",                             "Favorite Sports Movie"],
+    ["Which movie made me cry the most?",                             "Movie That Made Me Cry"],
+    ["Which movie scared me the most?",                               "Scariest Movie"],
+    ["Which movie made me laugh the hardest?",                        "Funniest Movie"],
+    ["Which movie do I wish I could watch for the first time again?", "Movie I Wish I Could Rewatch Fresh"],
+    ["What is my biggest guilty pleasure movie?",                     "Guilty Pleasure Movie"],
+    ["Which movie did I see too young?",                              "Movie I Saw Too Young"],
+    ["Which film has my favorite production design?",                 "Favorite Production Design"],
+    ["Which film has my favorite costume design?",                    "Favorite Costume Design"],
+    ["Which film has my favorite visual effects?",                    "Favorite Visual Effects"],
+    ["What is my favorite movie based on a true story?",              "Favorite True Story Movie"],
+    ["What is my favorite sequel that is better than the original?",  "Best Sequel Better Than Original"],
+    ["Which movie do I think has the worst ending?",                  "Movie With Worst Ending"],
+    ["Which film has my favorite final act?",                         "Favorite Final Act"],
+    ["Which movie do I think everyone should watch at least once?",   "Must Watch Once"],
+    ["Which movie would I never turn off if it came on TV?",          "Never Turn It Off"],
+  ];
+
+  const TV_QUESTIONS = [
+    ["What is my favorite TV show of all time?",                      "Favorite TV Show"],
+    ["Who is my favorite TV showrunner?",                             "Favorite Showrunner"],
+    ["What is my favorite TV drama?",                                 "Favorite TV Drama"],
+    ["What is my favorite TV comedy?",                                "Favorite TV Comedy"],
+    ["Who is my favorite TV villain?",                                "Favorite TV Villain"],
+    ["Who is my favorite TV character of all time?",                  "Favorite TV Character"],
+    ["Which TV show do I think is overrated?",                        "Overrated TV Show"],
+    ["Which TV show do I think is underrated?",                       "Underrated TV Show"],
+    ["Which TV show do I think was cancelled too soon?",              "Cancelled Too Soon"],
+    ["Which TV show do I think went on too long?",                    "Went On Too Long"],
+    ["Which TV show has my favorite series finale?",                  "Favorite Series Finale"],
+    ["Which TV show has my favorite pilot episode?",                  "Favorite Pilot Episode"],
+    ["Which TV show has my favorite theme song?",                     "Favorite Theme Song"],
+    ["Which TV show do I consider criminally overlooked?",            "Criminally Overlooked Show"],
+    ["What is my favorite limited series or miniseries?",             "Favorite Limited Series"],
+    ["Which TV show is just so much fun?",                            "Just So Much Fun"],
+    ["Which TV show fits not usually my thing but I love it?",        "Not Usually My Thing"],
+    ["What is the best old TV show in my opinion?",                   "Best Old TV Show"],
+    ["Which TV show do I think everyone should watch?",               "Everyone Should Watch"],
+    ["Which TV show do I most want to rewatch from the beginning?",   "Most Want to Rewatch"],
+  ];
+
+  const GAME_QUESTIONS = [
+    ["What is my favorite video game of all time?",                   "Favorite Game"],
+    ["Which game has my favorite story?",                             "Best Story"],
+    ["Which game has my favorite art style?",                         "Favorite Art Style"],
+    ["Which game has had the biggest personal impact on me?",         "Biggest Personal Impact"],
+    ["Which game has the best combat in my opinion?",                 "Best Combat"],
+    ["Which game do I think is overhated?",                           "Overhated"],
+    ["Which game do I think is underrated?",                          "Underrated"],
+    ["Which game do I think is overrated?",                           "Overrated"],
+    ["Which game do I think needs a remake?",                         "Needs a Remake"],
+    ["Which game do I consider criminally overlooked?",               "Criminally Overlooked"],
+    ["Which game has my favorite protagonist?",                       "Favorite Protagonist"],
+    ["Which game has my favorite antagonist or villain?",             "Favorite Antagonist"],
+    ["Which game has my favorite soundtrack?",                        "Best Soundtrack"],
+    ["What is my favorite multiplayer game?",                         "Best Multiplayer"],
+    ["Which game fits not usually my thing but I love it?",           "Not Usually My Thing But..."],
+    ["Which game do I play to turn my brain off?",                    "Turn My Brain Off"],
+    ["What is the best game to play with friends?",                   "Best With Friends"],
+    ["What is my favorite retro game?",                               "Best Retro Game"],
+    ["What is my most nostalgic childhood game?",                     "Nostalgic Childhood Game"],
+    ["Which game do I think everyone should play?",                   "Game Everyone Should Play"],
+  ];
+
+  const MUSIC_QUESTIONS = [
+    ["What is my favorite album of all time?",                        "Favorite Album"],
+    ["Who is my favorite artist or band?",                            "Favorite Artist"],
+    ["What is my favorite song of all time?",                         "Favorite Song"],
+    ["Which album has my favorite opening track?",                    "Favorite Opening Track"],
+    ["Which album has my favorite closing track?",                    "Favorite Closing Track"],
+    ["Which album has the best cover art in my opinion?",             "Best Album Cover Art"],
+    ["Which artist do I think is overrated?",                         "Overrated Artist"],
+    ["Which artist do I think is underrated?",                        "Underrated Artist"],
+    ["Which album do I consider criminally overlooked?",              "Criminally Overlooked Album"],
+    ["Which artist do I think everyone should listen to?",            "Everyone Should Listen To"],
+    ["What is my favorite live album or concert recording?",          "Favorite Live Album"],
+    ["Which album do I think has no skips?",                          "No Skips Album"],
+    ["What is my favorite debut album?",                              "Favorite Debut Album"],
+    ["Which artist has my favorite discography overall?",             "Favorite Discography"],
+    ["What is my favorite guilty pleasure song or artist?",           "Guilty Pleasure"],
+    ["Which album fits not usually my thing but I love it?",          "Not Usually My Thing"],
+    ["What is my most nostalgic album or song?",                      "Most Nostalgic"],
+    ["Which artist do I wish I could see live?",                      "Wish I Could See Live"],
+    ["What is my favorite song to play loud in the car?",             "Best Car Song"],
+    ["Which album do I think everyone should hear at least once?",    "Everyone Should Hear Once"],
+    ["What is my favorite genre of music to listen to in the gym?",   "Best Gym Music Genre"],
+    ["What is my most hated music genre?",                            "Most Hated Genre"],
+    ["Which song has had the biggest impact on my life?",             "Most Impactful Song"],
+    ["What is my favorite childhood artist?",                         "Favorite Artist From Childhood"],
+  ];
+
+  const qMap = { movies: MOVIE_QUESTIONS, tv: TV_QUESTIONS, games: GAME_QUESTIONS, music: MUSIC_QUESTIONS };
+  const questions = qMap[quizType] || MOVIE_QUESTIONS;
+  const filename  = `cinequiz_template_${quizType}.csv`;
+
+  const enc = v => /[,"\n]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v;
+
+  const rows = questions.map(([question, category]) => [
+    question, "Single Choice (Radio Button)", "Question points",
+    "1", "1", "TRUE", "", category, "TRUE",
+    "", "", "", "",   // option 1: text, correct, points, hint
+    "", "", "", "",   // option 2
+    "", "", "", "",   // option 3
+    "", "", "", ""    // option 4
+  ].map(enc).join(","));
+
+  const csv = [headers.map(enc).join(","), ...rows].join("\n");
+
+  const blob = new Blob([csv], { type: "text/csv" });
+  const url  = URL.createObjectURL(blob);
+  const a    = Object.assign(document.createElement("a"), { href: url, download: filename });
+  a.click();
+  URL.revokeObjectURL(url);
+};
+
+</script>
+</body>
+</html>
