@@ -2104,7 +2104,11 @@ window.downloadResultsCard = async function() {
     img.crossOrigin = "anonymous";
     img.onload  = () => resolve(img);
     img.onerror = () => resolve(null);
-    img.src = proxyImg(url);
+    // Use a blob URL via wfetch so the auth header is sent
+    wfetch(proxyImg(url))
+      .then(r => r.blob())
+      .then(blob => { img.src = URL.createObjectURL(blob); })
+      .catch(() => resolve(null));
   });
 
   const imgs = await Promise.all(picked.map(p => loadImg(p.url)));
@@ -2195,12 +2199,6 @@ window.downloadResultsCard = async function() {
   ctx.font = `400 18px 'DM Sans', sans-serif`;
   ctx.fillText(`${pct}%`, W / 2, y + 76);
   y += 96;
-
-  // Footer
-  ctx.fillStyle = isLight ? "#b08030" : "#7a6228";
-  ctx.font = `500 13px 'DM Sans', sans-serif`;
-  ctx.textAlign = "center";
-  ctx.fillText("CineQuiz  ·  Know Your Friend", W / 2, y + 16);
 
   // Download
   const link = document.createElement("a");
