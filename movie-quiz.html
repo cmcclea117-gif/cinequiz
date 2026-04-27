@@ -675,6 +675,60 @@
   }
 
   .toast.show { transform: translateX(-50%) translateY(0); }
+
+  /* ── ACCESS GATE ── */
+  .access-gate {
+    display: none;
+    max-width: 480px;
+    margin: 60px auto 0;
+    text-align: center;
+  }
+  .access-gate.visible { display: block; }
+  .access-gate-title {
+    font-family: var(--font-display);
+    font-size: 1.6rem;
+    font-style: italic;
+    color: var(--cream);
+    margin-bottom: 8px;
+  }
+  .access-gate-sub {
+    color: var(--muted);
+    font-size: 13px;
+    margin-bottom: 28px;
+    font-weight: 300;
+    line-height: 1.6;
+  }
+  .access-gate-form {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 28px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .access-gate-input {
+    padding: 10px 14px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--cream);
+    font-family: var(--font-body);
+    font-size: 14px;
+    outline: none;
+    width: 100%;
+  }
+  .access-gate-input:focus { border-color: var(--gold-dim); }
+  .access-gate-input::placeholder { color: var(--muted); }
+  .access-gate-msg {
+    font-size: 13px;
+    color: var(--muted);
+    margin-top: 4px;
+    display: none;
+  }
+  .access-gate-msg.show { display: block; }
+  .access-gate-msg.success { color: #88cc88; }
+  .access-gate-msg.error { color: #e88888; }
 </style>
 </head>
 <body>
@@ -690,8 +744,25 @@
     <div class="header-sub">Build a movie quiz from CSV — enrich with TMDB — share with friends</div>
   </div>
 
+  <!-- ACCESS GATE — shown when creating/importing without a valid token -->
+  <div class="access-gate" id="accessGate">
+    <div class="access-gate-title">Request Quiz Access</div>
+    <div class="access-gate-sub">
+      Quiz taking is open to everyone via shared links.<br>
+      To <strong style="color:var(--cream);">create</strong> a quiz, request access below.
+    </div>
+    <div class="access-gate-form">
+      <input class="access-gate-input" id="gateName" placeholder="Your name" autocomplete="off">
+      <input class="access-gate-input" id="gateEmail" placeholder="Your email address" type="email" autocomplete="off">
+      <button class="primary" onclick="submitAccessRequest()" style="width:100%;padding:11px;font-size:14px;">
+        Request Access
+      </button>
+      <div class="access-gate-msg" id="gateMsg"></div>
+    </div>
+  </div>
+
   <!-- MODE TOGGLE -->
-  <div class="mode-toggle">
+  <div class="mode-toggle" id="modeToggle" style="display:none;">
     <button onclick="switchMode('create')" id="modeCreate" class="primary">✏️ Create Quiz</button>
     <button onclick="switchMode('import')" id="modeImport">📁 Import CSV</button>
   </div>
@@ -966,8 +1037,100 @@ function wfetch(url, options = {}) {
 }
 
 /* ═══════════════════════════════════════════════════════════
-   UTILS
+   ACCESS GATE
 ═══════════════════════════════════════════════════════════ */
+async function checkAccess() {
+  const params = new URLSearchParams(window.location.search);
+  const quizURL = params.get("quiz");
+
+  // If loading a shared quiz link — skip gate entirely, show quiz area only
+  if (quizURL) {
+    document.getElementById("accessGate").style.display = "none";
+    document.getElementById("modeToggle").style.display = "none";
+    document.getElementById("creatorSection").style.display = "none";
+    document.getElementById("importSection").style.display = "none";
+    return;
+  }
+
+  // Check for token in URL param first (from approval email link)
+  const urlToken = params.get("token");
+  if (urlToken) {
+    const valid = await verifyToken(urlToken);
+    if (valid) {
+      localStorage.setItem("cq-access-token", urlToken);
+      showCreator();
+      // Clean token from URL without reload
+      window.history.replaceState({}, "", window.location.pathname);
+      return;
+    }
+  }
+
+  // Check localStorage for saved token
+  const savedToken = localStorage.getItem("cq-access-token");
+  if (savedToken) {
+    const valid = await verifyToken(savedToken);
+    if (valid) { showCreator(); return; }
+    else localStorage.removeItem("cq-access-token");
+  }
+
+  // No valid token — show access gate
+  document.getElementById("accessGate").classList.add("visible");
+  document.getElementById("modeToggle").style.display = "none";
+  document.getElementById("creatorSection").style.display = "none";
+  document.getElementById("importSection").style.display = "none";
+}
+
+async function verifyToken(token) {
+  try {
+    const res = await fetch(`${WORKER_URL}/check-access?token=${token}`);
+    const data = await res.json();
+    return data.valid === true;
+  } catch { return false; }
+}
+
+function showCreator() {
+  document.getElementById("accessGate").style.display = "none";
+  document.getElementById("modeToggle").style.display = "flex";
+  document.getElementById("creatorSection").style.display = "block";
+}
+
+window.submitAccessRequest = async function() {
+  const name  = document.getElementById("gateName").value.trim();
+  const email = document.getElementById("gateEmail").value.trim();
+  const msg   = document.getElementById("gateMsg");
+
+  if (!name || !email) {
+    msg.textContent = "Please fill in both your name and email.";
+    msg.className = "access-gate-msg show error";
+    return;
+  }
+
+  const btn = document.querySelector(".access-gate-form button.primary");
+  btn.disabled = true;
+  btn.textContent = "Sending…";
+  msg.className = "access-gate-msg";
+
+  try {
+    const res = await fetch(`${WORKER_URL}/request-access`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name, email })
+    });
+    const data = await res.json();
+    if (data.ok) {
+      msg.textContent = "The Quiz Master will approve you shortly. 🎬";
+      msg.className = "access-gate-msg show success";
+      btn.textContent = "Request Sent!";
+    } else {
+      throw new Error(data.error ?? "Unknown error");
+    }
+  } catch (e) {
+    msg.textContent = `Something went wrong: ${e.message}`;
+    msg.className = "access-gate-msg show error";
+    btn.disabled = false;
+    btn.textContent = "Request Access";
+  }
+};
 function get(obj, key) {
   // Match header regardless of embedded newlines (original SurveyMonkey export) or flat (our template)
   const normalize = s => s.replace(/\r?\n/g, " ").trim();
@@ -1286,13 +1449,15 @@ function setQuizType(type) {
 ═══════════════════════════════════════════════════════════ */
 window.addEventListener("DOMContentLoaded", () => {
   renderCreatorForm();
-  const params  = new URLSearchParams(window.location.search);
-  const quizURL = params.get("quiz");
-  if (quizURL) {
-    switchMode('import');
-    document.getElementById("jsonUrlInput").value = quizURL;
-    loadFromURL();
-  }
+  checkAccess().then(() => {
+    const params  = new URLSearchParams(window.location.search);
+    const quizURL = params.get("quiz");
+    if (quizURL) {
+      switchMode('import');
+      document.getElementById("jsonUrlInput").value = quizURL;
+      loadFromURL();
+    }
+  });
 });
 
 /* ═══════════════════════════════════════════════════════════
