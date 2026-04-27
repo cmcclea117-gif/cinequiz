@@ -1397,6 +1397,9 @@ Return ONLY a JSON array of 3 strings. Example: ["Option A", "Option B", "Option
     console.log("Gemini full response:", JSON.stringify(data));
     console.log("Gemini raw text:", raw);
 
+    // Workers AI may return an array directly instead of a JSON string
+    if (Array.isArray(raw)) return raw.slice(0, 3);
+
     // Strip any markdown fences and extract the JSON array
     const jsonMatch = raw.match(/\[[\s\S]*\]/);
     if (!jsonMatch) throw new Error("No JSON array found in Gemini response");
