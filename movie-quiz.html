@@ -741,7 +741,7 @@
   <div class="header">
     <div class="header-eyebrow" onclick="devClick()" style="cursor:default;user-select:none;">★ Know Your Friend ★</div>
     <h1>Cine<span>Quiz</span></h1>
-    <div class="header-sub">Build a movie quiz from CSV — enrich with TMDB — share with friends</div>
+    <div class="header-sub">pick a topic ― build a quiz ― share with friends</div>
   </div>
 
   <!-- ACCESS GATE — shown when creating/importing without a valid token -->
@@ -760,6 +760,8 @@
       <div class="access-gate-msg" id="gateMsg"></div>
     </div>
   </div>
+
+  <div style="height:24px;"></div>
 
   <!-- MODE TOGGLE -->
   <div class="mode-toggle" id="modeToggle" style="display:none;">
@@ -987,8 +989,11 @@
   </div>
 
   <div class="footer-note">
-    Powered by <a href="https://www.themoviedb.org/" target="_blank" rel="noopener" style="color:var(--gold-dim); text-decoration:none;">TMDB API</a>
-    &nbsp;·&nbsp; Built with PapaParse
+    Powered by <a href="https://www.themoviedb.org/" target="_blank" rel="noopener" style="color:var(--gold-dim); text-decoration:none;">TMDB</a>
+    &nbsp;·&nbsp; <a href="https://rawg.io/" target="_blank" rel="noopener" style="color:var(--gold-dim); text-decoration:none;">RAWG</a>
+    &nbsp;·&nbsp; <a href="https://www.last.fm/" target="_blank" rel="noopener" style="color:var(--gold-dim); text-decoration:none;">Last.fm</a>
+    &nbsp;·&nbsp; <a href="https://workers.cloudflare.com/" target="_blank" rel="noopener" style="color:var(--gold-dim); text-decoration:none;">Cloudflare Workers AI</a>
+    &nbsp;·&nbsp; <a href="https://resend.com/" target="_blank" rel="noopener" style="color:var(--gold-dim); text-decoration:none;">Resend</a>
   </div>
 
 </div>
@@ -1118,7 +1123,7 @@ window.submitAccessRequest = async function() {
     });
     const data = await res.json();
     if (data.ok) {
-      msg.textContent = "The Quiz Master will approve you shortly. 🎬";
+      msg.textContent = "The Quizmaster will approve you shortly. 🎬";
       msg.className = "access-gate-msg show success";
       btn.textContent = "Request Sent!";
     } else {
