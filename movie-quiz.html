@@ -1976,6 +1976,7 @@ window.buildFromCreator = async function() {
 
     // Consistency fix: if ANY option in this question has a knownFor,
     // mark all options as person type so "Known for:" shows consistently
+    // Applies to all quiz types
     const hasAnyKnownFor = q.options.some(o => o.knownFor);
     if (hasAnyKnownFor) {
       q.options = q.options.map(o => ({
@@ -2406,9 +2407,20 @@ window.loadCSV = async function() {
           const enriched = await enrichOption(opt);
           done++;
           fillEl.style.width = `${25 + Math.round((done / total) * 75)}%`;
-          labelEl.textContent = `Fetching TMDB data… (${done}/${total})`;
+          labelEl.textContent = `Fetching data… (${done}/${total})`;
           return enriched;
         }));
+
+        // Consistency: if any option has knownFor, all options should show it
+        const hasAnyKnownFor = q.options.some(o => o.knownFor);
+        if (hasAnyKnownFor) {
+          q.options = q.options.map(o => ({
+            ...o,
+            resultType: o.resultType || "person",
+            knownFor: o.knownFor || o.text
+          }));
+        }
+
         shuffle(q.options);
       }
 
@@ -2836,14 +2848,14 @@ async function checkForResultsPage() {
 
     if (data.type !== "results") throw new Error("Not a results file");
 
-    // Populate hero
+    // Populate hero — don't show score to avoid spoiling for quiz creator
     const name = data.creatorName;
     document.getElementById("resultsTitleText").innerHTML = name
       ? `How well do you know <span>${name}</span>?`
       : `Quiz Results`;
-    document.getElementById("resultsScoreNum").textContent  = data.score;
-    document.getElementById("resultsScoreTotal").textContent = `/ ${data.total}`;
-    document.getElementById("resultsPct").textContent = `${data.pct}%`;
+    // Hide score on public results page
+    document.getElementById("resultsScoreNum").parentElement.style.display = "none";
+    document.getElementById("resultsPct").style.display = "none";
 
     // Take quiz button
     if (data.quizUrl) {
@@ -2859,21 +2871,16 @@ async function checkForResultsPage() {
     const emoji = typeEmoji[data.quizType] ?? "🎬";
 
     grid.innerHTML = data.answers.map(a => {
-      const imgSrc = a.isRight ? a.correctImage : a.chosenImage;
+      const imgSrc = a.chosenImage || a.correctImage;
       const imgEl = imgSrc
         ? `<img class="results-row-img" src="${imgSrc}" alt="" onerror="this.style.display='none'">`
         : `<div class="results-row-img-placeholder">${emoji}</div>`;
-      const wrongLine = !a.isRight && a.correct
-        ? `<div class="results-row-correct">✓ ${a.correct}</div>`
-        : "";
       return `
-        <div class="results-row ${a.isRight ? 'right' : 'wrong'}">
-          <div class="results-row-icon">${a.isRight ? "✓" : "✕"}</div>
+        <div class="results-row">
           ${imgEl}
           <div class="results-row-info">
             <div class="results-row-question">${a.question}</div>
             <div class="results-row-answer">${a.chosen || "No answer"}</div>
-            ${wrongLine}
           </div>
         </div>`;
     }).join("");
