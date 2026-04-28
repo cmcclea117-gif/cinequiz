@@ -1028,6 +1028,41 @@ const TMDB_BASE   = `${WORKER_URL}/tmdb`;
 const TMDB_IMG    = "https://image.tmdb.org/t/p/w200";
 const RAWG_BASE   = `${WORKER_URL}/rawg`;
 const GEMINI_URL  = `${WORKER_URL}/gemini`;
+
+/* ═══════════════════════════════════════════════════════════
+   QUIZ DATA PERSISTENCE
+═══════════════════════════════════════════════════════════ */
+const QUIZ_CACHE_PREFIX = "cq-quiz-";
+
+function saveQuizToCache(quizUrl, data) {
+  try {
+    const payload = {
+      creatorName: data.creatorName ?? null,
+      questions: [...data],
+      savedAt: Date.now(),
+      url: quizUrl
+    };
+    localStorage.setItem(`${QUIZ_CACHE_PREFIX}${quizUrl}`, JSON.stringify(payload));
+  } catch(e) {
+    console.warn("Could not cache quiz:", e);
+  }
+}
+
+function loadQuizFromCache(quizUrl) {
+  try {
+    const raw = localStorage.getItem(`${QUIZ_CACHE_PREFIX}${quizUrl}`);
+    if (!raw) return null;
+    const payload = JSON.parse(raw);
+    // Expire after 7 days
+    if (Date.now() - payload.savedAt > 7 * 24 * 60 * 60 * 1000) {
+      localStorage.removeItem(`${QUIZ_CACHE_PREFIX}${quizUrl}`);
+      return null;
+    }
+    return payload;
+  } catch(e) {
+    return null;
+  }
+}
 const GIST_URL    = `${WORKER_URL}/gist`;
 const LASTFM_BASE = `${WORKER_URL}/lastfm`;
 
@@ -1813,6 +1848,19 @@ window.loadFromURL = async function() {
   const url = document.getElementById("jsonUrlInput").value.trim();
   if (!url) return setStatus("error", "Paste a JSON URL first.");
 
+  // Check cache first
+  const cached = loadQuizFromCache(url);
+  if (cached) {
+    quizData = cached.questions;
+    quizData.creatorName = cached.creatorName;
+    shuffle(quizData);
+    document.getElementById("exportJsonBtn").disabled = false;
+    document.getElementById("gistBtn").disabled = false;
+    setStatus("success", `Loaded ${quizData.length} questions from cache`);
+    renderQuiz();
+    return;
+  }
+
   setStatus("loading", "Fetching quiz…");
 
   try {
@@ -1834,12 +1882,28 @@ window.loadFromURL = async function() {
 
     quizData = questions;
     quizData.creatorName = creatorName;
+
+    // Save to cache for offline/reload resilience
+    saveQuizToCache(url, quizData);
+
     shuffle(quizData);
     document.getElementById("exportJsonBtn").disabled = false;
     document.getElementById("gistBtn").disabled = false;
     setStatus("success", `Loaded ${quizData.length} questions from URL`);
     renderQuiz();
   } catch (e) {
+    // Try cache as fallback if fetch fails
+    const fallback = loadQuizFromCache(url);
+    if (fallback) {
+      quizData = fallback.questions;
+      quizData.creatorName = fallback.creatorName;
+      shuffle(quizData);
+      document.getElementById("exportJsonBtn").disabled = false;
+      document.getElementById("gistBtn").disabled = false;
+      setStatus("success", `Loaded from saved cache (offline mode)`);
+      renderQuiz();
+      return;
+    }
     setStatus("error", `Could not load quiz: ${e.message}`);
   }
 };
