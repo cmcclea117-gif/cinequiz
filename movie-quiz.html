@@ -676,6 +676,143 @@
 
   .toast.show { transform: translateX(-50%) translateY(0); }
 
+  /* ── RESULTS PAGE ── */
+  #resultsPage {
+    display: none;
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 40px 20px 80px;
+    position: relative;
+    z-index: 1;
+  }
+  #resultsPage.visible { display: block; }
+
+  .results-hero {
+    text-align: center;
+    margin-bottom: 40px;
+  }
+  .results-eyebrow {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 10px;
+  }
+  .results-title {
+    font-family: var(--font-display);
+    font-size: clamp(1.6rem, 5vw, 2.8rem);
+    font-style: italic;
+    color: var(--cream);
+    margin-bottom: 24px;
+  }
+  .results-title span { color: var(--gold); }
+  .results-score-wrap {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+  .results-score-num {
+    font-family: var(--font-display);
+    font-size: 5rem;
+    color: var(--gold);
+    line-height: 1;
+  }
+  .results-score-total {
+    font-size: 1.6rem;
+    color: var(--muted);
+  }
+  .results-pct {
+    font-size: 16px;
+    color: var(--muted);
+    margin-bottom: 28px;
+  }
+  .results-cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 24px;
+    background: var(--gold);
+    color: #0d0d0f;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: background 0.15s;
+    border: none;
+    cursor: pointer;
+  }
+  .results-cta:hover { background: #d4b05e; }
+
+  .results-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 32px;
+  }
+  .results-row {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px 16px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    transition: border-color 0.2s;
+  }
+  .results-row.right { border-color: var(--correct-border); background: var(--correct); }
+  .results-row.wrong { border-color: var(--incorrect-border); background: var(--incorrect); }
+
+  .results-row-icon {
+    font-size: 18px;
+    flex-shrink: 0;
+    width: 24px;
+    text-align: center;
+  }
+  .results-row-img {
+    width: 44px; height: 44px;
+    border-radius: 5px;
+    object-fit: cover;
+    flex-shrink: 0;
+    border: 1px solid var(--border);
+    background: var(--border);
+  }
+  .results-row-img-placeholder {
+    width: 44px; height: 44px;
+    border-radius: 5px;
+    background: var(--border);
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    color: var(--muted);
+  }
+  .results-row-info { flex: 1; min-width: 0; }
+  .results-row-question {
+    font-size: 11px;
+    color: var(--muted);
+    font-weight: 500;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    margin-bottom: 3px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .results-row-answer {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--cream);
+  }
+  .results-row-correct {
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 2px;
+    font-style: italic;
+  }
+
   /* ── ACCESS GATE ── */
   .access-gate {
     display: none;
@@ -777,11 +914,13 @@
       <!-- Quiz Type -->
       <div style="margin-bottom:14px;">
         <div style="font-size:11px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin-bottom:8px;">Quiz Type</div>
-        <div style="display:flex;gap:8px;flex-wrap:wrap;">
-          <button onclick="setQuizType('movies');renderCreatorForm()" id="ctypeMovies" class="primary" style="flex:1;">🎬 Movies</button>
-          <button onclick="setQuizType('tv');renderCreatorForm()" id="ctypeTV" style="flex:1;">📺 TV Shows</button>
-          <button onclick="setQuizType('games');renderCreatorForm()" id="ctypeGames" style="flex:1;">🎮 Video Games</button>
-          <button onclick="setQuizType('music');renderCreatorForm()" id="ctypeMusic" style="flex:1;">🎵 Music</button>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">
+          <button onclick="setQuizType('movies');renderCreatorForm()" id="ctypeMovies" class="primary">🎬 Movies</button>
+          <button onclick="setQuizType('tv');renderCreatorForm()" id="ctypeTV">📺 TV Shows</button>
+          <button onclick="setQuizType('games');renderCreatorForm()" id="ctypeGames">🎮 Video Games</button>
+          <button onclick="setQuizType('music');renderCreatorForm()" id="ctypeMusic">🎵 Music</button>
+          <button onclick="setQuizType('books');renderCreatorForm()" id="ctypeBooks">📚 Books</button>
+          <button onclick="setQuizType('boardgames');renderCreatorForm()" id="ctypeBoardgames">🎲 Board Games</button>
         </div>
       </div>
 
@@ -793,10 +932,11 @@
       </div>
 
       <div style="font-size:12px;color:var(--muted);margin-bottom:14px;line-height:1.6;">
-        Fill in <strong style="color:var(--cream);">Your Answer</strong> for each question. Use
-        <code style="background:var(--surface2);padding:1px 5px;border-radius:3px;font-size:11px;">Character (Actor)</code>
-        format for person questions. Add a <strong style="color:var(--cream);">Search Hint</strong> (show/movie name)
-        to help find the right poster. Leave any question blank to skip it.
+        Fill in <strong style="color:var(--cream);">Your Answer</strong> for any questions you want to include.
+        <strong style="color:var(--gold);">You don't have to answer every question</strong> — blank ones are simply skipped.
+        Use <code style="background:var(--surface2);padding:1px 5px;border-radius:3px;font-size:11px;">Character (Actor)</code>
+        format for person questions. Add a <strong style="color:var(--cream);">Search Hint</strong> (show/movie/artist name)
+        to help find the right image.
       </div>
 
       <div class="creator-header">
@@ -865,11 +1005,13 @@
     <!-- Step 1: Quiz Type -->
     <div style="margin-bottom:14px;">
       <div style="font-size:11px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin-bottom:8px;">Step 1 — Quiz Type</div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap;">
-        <button onclick="setQuizType('movies')" id="typeMovies" class="primary" style="flex:1;">🎬 Movies</button>
-        <button onclick="setQuizType('tv')" id="typeTV" style="flex:1;">📺 TV Shows</button>
-        <button onclick="setQuizType('games')" id="typeGames" style="flex:1;">🎮 Video Games</button>
-        <button onclick="setQuizType('music')" id="typeMusic" style="flex:1;">🎵 Music</button>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">
+        <button onclick="setQuizType('movies')" id="typeMovies" class="primary">🎬 Movies</button>
+        <button onclick="setQuizType('tv')" id="typeTV">📺 TV Shows</button>
+        <button onclick="setQuizType('games')" id="typeGames">🎮 Video Games</button>
+        <button onclick="setQuizType('music')" id="typeMusic">🎵 Music</button>
+        <button onclick="setQuizType('books')" id="typeBooks">📚 Books</button>
+        <button onclick="setQuizType('boardgames')" id="typeBoardgames">🎲 Board Games</button>
       </div>
     </div>
 
@@ -970,15 +1112,27 @@
     </div>
 
     <div class="action-row" id="postSubmitActions" style="display:none;margin-bottom:16px;">
-      <button class="primary" onclick="downloadResultsCard()" id="resultsCardBtn">
+      <button class="primary" onclick="shareResults()" id="shareResultsBtn">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="3" r="1.5"/><circle cx="4" cy="8" r="1.5"/><circle cx="12" cy="13" r="1.5"/><path d="M5.5 9l5 3M10.5 4.5l-5 3"/></svg>
+        Share Results
+      </button>
+      <button onclick="downloadResultsCard()" id="resultsCardBtn">
         <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="2" y="2" width="12" height="12" rx="2"/><path d="M2 6h12"/></svg>
-        Download Results Card
+        Download Card
       </button>
       <button onclick="exportResults()" id="exportResultsBtn">
         <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M2 11v2a1 1 0 001 1h10a1 1 0 001-1v-2M8 10V2M5 5l3-3 3 3"/></svg>
         Export CSV
       </button>
       <button onclick="confirmRetake()">↩ Retake Quiz</button>
+    </div>
+    <!-- Results share link output -->
+    <div id="resultsLinkOutput" style="display:none;margin-bottom:16px;">
+      <div style="font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:var(--gold-dim);font-weight:600;margin-bottom:6px;">Results Link</div>
+      <div style="display:flex;gap:8px;">
+        <input type="text" id="resultsShareLink" readonly style="flex:1;padding:9px 13px;background:var(--bg);border:1px solid var(--gold-dim);border-radius:6px;color:var(--gold);font-family:var(--font-body);font-size:13px;">
+        <button onclick="copyResultsLink()">Copy</button>
+      </div>
     </div>
 
     <form id="quizForm" onsubmit="return false;"></form>
@@ -997,6 +1151,24 @@
     &nbsp;·&nbsp; <a href="https://resend.com/" target="_blank" rel="noopener" style="color:var(--gold-dim); text-decoration:none;">Resend</a>
   </div>
 
+</div><!-- end .container -->
+
+<!-- RESULTS PAGE — shown when ?results= URL param is present -->
+<div id="resultsPage">
+  <div class="results-hero">
+    <div class="results-eyebrow">★ Know Your Friend ★</div>
+    <div class="results-title" id="resultsTitleText">How well do you know <span>—</span>?</div>
+    <div class="results-score-wrap">
+      <div class="results-score-num" id="resultsScoreNum">0</div>
+      <div class="results-score-total" id="resultsScoreTotal">/ 0</div>
+    </div>
+    <div class="results-pct" id="resultsPct">0%</div>
+    <a id="resultsTakeQuizBtn" href="#" class="results-cta">🎬 Take This Quiz</a>
+  </div>
+  <div class="results-grid" id="resultsGrid"></div>
+  <div style="text-align:center;margin-top:32px;font-size:12px;color:var(--muted);">
+    cinequiz.quest
+  </div>
 </div>
 
 <!-- TOAST -->
@@ -1063,8 +1235,10 @@ function loadQuizFromCache(quizUrl) {
     return null;
   }
 }
-const GIST_URL    = `${WORKER_URL}/gist`;
-const LASTFM_BASE = `${WORKER_URL}/lastfm`;
+const GIST_URL       = `${WORKER_URL}/gist`;
+const LASTFM_BASE    = `${WORKER_URL}/lastfm`;
+const BGG_BASE       = `${WORKER_URL}/bgg`;
+const HARDCOVER_URL  = `${WORKER_URL}/hardcover`;
 
 // Helper: fetch through worker with auth header
 function wfetch(url, options = {}) {
@@ -1258,130 +1432,479 @@ function switchMode(mode) {
 }
 
 /* ═══════════════════════════════════════════════════════════
-   CREATOR FORM
+   QUESTION POOLS (60 per topic)
 ═══════════════════════════════════════════════════════════ */
-function getCreatorQuestions() {
-  const MOVIE_Q = [
-    "What is my favorite movie?","Who is my favorite director?","Which is my favorite screenplay?",
-    "Which film has my favorite cinematography?","Which film has my favorite ending?",
-    "Which movie do I think is overhated?","Which movie do I think is underrated?",
-    "Which movie do I think is overrated?","Which movie do I think needs a sequel?",
-    "Which movie do I consider criminally overlooked?","Who is my favorite actor (specific performance)?",
-    "Who is my favorite actress (specific performance)?","Which film has the best score in my opinion?",
-    "Which movie has the best songs in my opinion?","Which movie fits not usually my thing but I love it?",
-    "Which movie is just so much fun?","Whats the best movie to watch with friends?",
-    "What is the best old movie in my opinion?","What is my favorite long movie 3 or more hours?",
-    "Which movie do I think everyone should watch?","Who is my favorite movie villain?",
-    "Who is my favorite movie character of all time?","Who is my favorite comedic performance in a film?",
-    "What is my favorite animated movie?","Which film has my favorite ensemble cast?",
-    "Which film has my favorite opening scene?","Which film has my favorite plot twist?",
-    "Which film has my favorite single scene?","Which film has my favorite monologue?",
-    "What is my favorite horror movie?","What is my favorite sci-fi movie?",
-    "What is my favorite action movie?","What is my favorite comedy?",
-    "What is my favorite foreign language film?","What is my favorite documentary?",
-    "What is my favorite sports movie?","Which movie made me cry the most?",
-    "Which movie scared me the most?","Which movie made me laugh the hardest?",
-    "Which movie do I wish I could watch for the first time again?","What is my biggest guilty pleasure movie?",
-    "Which movie did I see too young?","Which film has my favorite production design?",
-    "Which film has my favorite costume design?","Which film has my favorite visual effects?",
-    "What is my favorite movie based on a true story?","What is my favorite sequel that is better than the original?",
-    "Which movie do I think has the worst ending?","Which film has my favorite final act?",
-    "Which movie do I think everyone should watch at least once?",
-    "Which movie would I never turn off if it came on TV?"
-  ];
-  const TV_Q = [
-    "What is my favorite TV show of all time?","Who is my favorite TV showrunner?",
-    "What is my favorite TV drama?","What is my favorite TV comedy?",
-    "Who is my favorite TV villain?","Who is my favorite TV character of all time?",
-    "Which TV show do I think is overrated?","Which TV show do I think is underrated?",
-    "Which TV show do I think was cancelled too soon?","Which TV show do I think went on too long?",
-    "Which TV show has my favorite series finale?","Which TV show has my favorite pilot episode?",
-    "Which TV show has my favorite theme song?","Which TV show do I consider criminally overlooked?",
-    "What is my favorite limited series or miniseries?","Which TV show is just so much fun?",
-    "Which TV show fits not usually my thing but I love it?","What is the best old TV show in my opinion?",
-    "Which TV show do I think everyone should watch?","Which TV show do I most want to rewatch from the beginning?"
-  ];
-  const GAME_Q = [
-    "What is my favorite video game of all time?","Which game has my favorite story?",
-    "Which game has my favorite art style?","Which game has had the biggest personal impact on me?",
-    "Which game has the best combat in my opinion?","Which game do I think is overhated?",
-    "Which game do I think is underrated?","Which game do I think is overrated?",
-    "Which game do I think needs a remake?","Which game do I consider criminally overlooked?",
-    "Which game has my favorite protagonist?","Which game has my favorite antagonist or villain?",
-    "Which game has my favorite soundtrack?","What is my favorite multiplayer game?",
-    "Which game fits not usually my thing but I love it?","Which game do I play to turn my brain off?",
-    "What is the best game to play with friends?","What is my favorite retro game?",
-    "What is my most nostalgic childhood game?","Which game do I think everyone should play?"
-  ];
-  const MUSIC_Q = [
-    "What is my favorite album of all time?",
-    "Who is my favorite artist or band?",
-    "What is my favorite song of all time?",
-    "Which album has my favorite opening track?",
-    "Which album has my favorite closing track?",
-    "Which album has the best cover art in my opinion?",
-    "Which artist do I think is overrated?",
-    "Which artist do I think is underrated?",
-    "Which album do I consider criminally overlooked?",
-    "Which artist do I think everyone should listen to?",
-    "What is my favorite live album or concert recording?",
-    "Which album do I think has no skips?",
-    "What is my favorite debut album?",
-    "Which artist has my favorite discography overall?",
-    "What is my favorite guilty pleasure song or artist?",
-    "Which album fits not usually my thing but I love it?",
-    "What is my most nostalgic album or song?",
-    "Which artist do I wish I could see live?",
-    "What is my favorite song to play loud in the car?",
-    "Which album do I think everyone should hear at least once?",
-    "What is my favorite genre of music to listen to in the gym?",
-    "What is my most hated music genre?",
-    "Which song has had the biggest impact on my life?",
-    "What is my favorite childhood artist?"
-  ];
-  return quizType === 'tv' ? TV_Q : quizType === 'games' ? GAME_Q : quizType === 'music' ? MUSIC_Q : MOVIE_Q;
+const QUESTION_POOLS = {
+  movies: [
+    {id:"m01", q:"What is my favorite movie?"},
+    {id:"m02", q:"Who is my favorite director?"},
+    {id:"m03", q:"Which is my favorite screenplay?"},
+    {id:"m04", q:"Which film has my favorite cinematography?"},
+    {id:"m05", q:"Which film has my favorite ending?"},
+    {id:"m06", q:"Which movie do I think is overhated?"},
+    {id:"m07", q:"Which movie do I think is underrated?"},
+    {id:"m08", q:"Which movie do I think is overrated?"},
+    {id:"m09", q:"Which movie do I think needs a sequel?"},
+    {id:"m10", q:"Which movie do I consider criminally overlooked?"},
+    {id:"m11", q:"Who is my favorite actor (specific performance)?"},
+    {id:"m12", q:"Who is my favorite actress (specific performance)?"},
+    {id:"m13", q:"Which film has the best score in my opinion?"},
+    {id:"m14", q:"Which movie has the best songs in my opinion?"},
+    {id:"m15", q:"Which movie fits not usually my thing but I love it?"},
+    {id:"m16", q:"Which movie has the best rewatch value?"},
+    {id:"m17", q:"What is the best movie to watch with friends?"},
+    {id:"m18", q:"What is the best old movie in my opinion?"},
+    {id:"m19", q:"What is my favorite long movie 3 or more hours?"},
+    {id:"m20", q:"Which movie do I think deserves a director's cut?"},
+    {id:"m21", q:"Who is my favorite movie villain?"},
+    {id:"m22", q:"Who is my favorite movie character of all time?"},
+    {id:"m23", q:"Who is my favorite comedic performance in a film?"},
+    {id:"m24", q:"What is my favorite animated movie?"},
+    {id:"m25", q:"Which film has my favorite ensemble cast?"},
+    {id:"m26", q:"Which film has my favorite opening scene?"},
+    {id:"m27", q:"Which film has my favorite plot twist?"},
+    {id:"m28", q:"Which film has my favorite single scene?"},
+    {id:"m29", q:"Which film has my favorite monologue?"},
+    {id:"m30", q:"What is my favorite horror movie?"},
+    {id:"m31", q:"What is my favorite sci-fi movie?"},
+    {id:"m32", q:"What is my favorite action movie?"},
+    {id:"m33", q:"What is my favorite comedy?"},
+    {id:"m34", q:"What is my favorite foreign language film?"},
+    {id:"m35", q:"What is my favorite documentary?"},
+    {id:"m36", q:"What is my favorite sports movie?"},
+    {id:"m37", q:"Which movie made me cry the most?"},
+    {id:"m38", q:"Which movie scared me the most?"},
+    {id:"m39", q:"Which movie made me laugh the hardest?"},
+    {id:"m40", q:"Which movie do I wish I could watch for the first time again?"},
+    {id:"m41", q:"What is my biggest guilty pleasure movie?"},
+    {id:"m42", q:"Which movie did I see too young?"},
+    {id:"m43", q:"Which film has my favorite production design?"},
+    {id:"m44", q:"Which film has my favorite costume design?"},
+    {id:"m45", q:"Which film has my favorite visual effects?"},
+    {id:"m46", q:"What is my favorite movie based on a true story?"},
+    {id:"m47", q:"What is my favorite sequel that is better than the original?"},
+    {id:"m48", q:"Which movie do I think has the worst ending?"},
+    {id:"m49", q:"Which film has the most satisfying character conclusion?"},
+    {id:"m50", q:"Which movie do I think everyone should watch at least once?"},
+    {id:"m51", q:"Which movie would I never turn off if it came on TV?"},
+    {id:"m52", q:"Which movie has the best opening 10 minutes?"},
+    {id:"m53", q:"Which movie universe would I most want to live in?"},
+    {id:"m54", q:"Which actor do I think is underrated?"},
+    {id:"m55", q:"Which movie has the best fight scene?"},
+    {id:"m56", q:"Which movie do I think deserved more awards?"},
+    {id:"m57", q:"Which remake is better than the original in my opinion?"},
+    {id:"m58", q:"Which movie has the best friendship?"},
+    {id:"m59", q:"Which movie has the best soundtrack I still listen to?"},
+    {id:"m60", q:"Which movie character do I relate to most?"},
+  ],
+  tv: [
+    {id:"t01", q:"What is my favorite TV show of all time?"},
+    {id:"t02", q:"Who is my favorite TV showrunner?"},
+    {id:"t03", q:"What is my favorite TV drama?"},
+    {id:"t04", q:"What is my favorite TV comedy?"},
+    {id:"t05", q:"Who is my favorite TV villain?"},
+    {id:"t06", q:"Who is my favorite TV character of all time?"},
+    {id:"t07", q:"Which TV show do I think is overrated?"},
+    {id:"t08", q:"Which TV show do I think is underrated?"},
+    {id:"t09", q:"Which TV show do I think was cancelled too soon?"},
+    {id:"t10", q:"Which TV show do I think went on too long?"},
+    {id:"t11", q:"Which TV show has my favorite series finale?"},
+    {id:"t12", q:"Which TV show has my favorite pilot episode?"},
+    {id:"t13", q:"Which TV show has my favorite theme song?"},
+    {id:"t14", q:"Which TV show do I consider criminally overlooked?"},
+    {id:"t15", q:"What is my favorite limited series or miniseries?"},
+    {id:"t16", q:"Which TV show is just so much fun?"},
+    {id:"t17", q:"Which TV show fits not usually my thing but I love it?"},
+    {id:"t18", q:"What is the best old TV show in my opinion?"},
+    {id:"t19", q:"Which TV show do I think everyone should watch?"},
+    {id:"t20", q:"Which TV show do I most want to rewatch from the beginning?"},
+    {id:"t21", q:"Which TV show has the best season overall?"},
+    {id:"t22", q:"Which TV character do I relate to most?"},
+    {id:"t23", q:"Which TV show has the best ensemble cast?"},
+    {id:"t24", q:"Which TV show has the best opening credits sequence?"},
+    {id:"t25", q:"Which TV show made me cry the most?"},
+    {id:"t26", q:"Which TV show has the most rewatchable episodes?"},
+    {id:"t27", q:"Which TV show has the best villain arc?"},
+    {id:"t28", q:"Which TV show do I think had the best writing?"},
+    {id:"t29", q:"Which TV show has the best friendship?"},
+    {id:"t30", q:"Which TV show has the best romance?"},
+    {id:"t31", q:"Which TV show scared me the most?"},
+    {id:"t32", q:"Which TV show made me laugh the hardest?"},
+    {id:"t33", q:"Which TV show has the best world-building?"},
+    {id:"t34", q:"Which TV show do I wish had a spin-off?"},
+    {id:"t35", q:"Which TV show has the best episode ever made?"},
+    {id:"t36", q:"Which animated TV show is my favorite?"},
+    {id:"t37", q:"Which TV show has the best costume design?"},
+    {id:"t38", q:"Which TV show has the most satisfying character arc?"},
+    {id:"t39", q:"Which TV show has the best first episode to hook someone?"},
+    {id:"t40", q:"Which TV show has the best cold open?"},
+    {id:"t41", q:"Which TV character do I think is most underrated?"},
+    {id:"t42", q:"Which TV show has the best season 1?"},
+    {id:"t43", q:"Which TV show got significantly better after season 1?"},
+    {id:"t44", q:"Which TV documentary or docuseries is my favorite?"},
+    {id:"t45", q:"Which TV show has the most iconic catchphrase?"},
+    {id:"t46", q:"Which TV show has the most shocking plot twist?"},
+    {id:"t47", q:"Which TV show has the best sibling relationship?"},
+    {id:"t48", q:"Which TV show has the best mentor and student dynamic?"},
+    {id:"t49", q:"Which TV show do I think has the most consistent quality?"},
+    {id:"t50", q:"Which TV show has the best international non-English series?"},
+    {id:"t51", q:"Which TV show do I think is the most underrated drama?"},
+    {id:"t52", q:"Which TV show has the best newsroom or workplace setting?"},
+    {id:"t53", q:"Which TV show has the best sports storyline?"},
+    {id:"t54", q:"Which TV show do I think has the best narration?"},
+    {id:"t55", q:"Which TV show made me stay up all night watching?"},
+    {id:"t56", q:"Which TV show changed how I think about something?"},
+    {id:"t57", q:"Which TV show has the best anti-hero?"},
+    {id:"t58", q:"Which TV show has the best redemption arc?"},
+    {id:"t59", q:"Which TV show has the best final season?"},
+    {id:"t60", q:"Which TV show do I quote most in real life?"},
+  ],
+  games: [
+    {id:"g01", q:"What is my favorite video game of all time?"},
+    {id:"g02", q:"Which game has my favorite story?"},
+    {id:"g03", q:"Which game has my favorite art style?"},
+    {id:"g04", q:"Which game has had the biggest personal impact on me?"},
+    {id:"g05", q:"Which game has the best combat in my opinion?"},
+    {id:"g06", q:"Which game do I think is overhated?"},
+    {id:"g07", q:"Which game do I think has the best cult following?"},
+    {id:"g08", q:"Which game do I think is overrated?"},
+    {id:"g09", q:"Which game do I think needs a remake?"},
+    {id:"g10", q:"Which game do I consider criminally overlooked?"},
+    {id:"g11", q:"Which game has my favorite protagonist?"},
+    {id:"g12", q:"Which game has my favorite antagonist or villain?"},
+    {id:"g13", q:"Which game has my favorite soundtrack?"},
+    {id:"g14", q:"What is my favorite multiplayer game?"},
+    {id:"g15", q:"Which game fits not usually my thing but I love it?"},
+    {id:"g16", q:"Which game do I play to turn my brain off?"},
+    {id:"g17", q:"What is the best game to play with friends?"},
+    {id:"g18", q:"What is my favorite retro game?"},
+    {id:"g19", q:"What is my most nostalgic childhood game?"},
+    {id:"g20", q:"Which game do I think everyone should play?"},
+    {id:"g21", q:"Which game has the best ending?"},
+    {id:"g22", q:"Which game has the best open world?"},
+    {id:"g23", q:"Which game has the best side quests?"},
+    {id:"g24", q:"Which game has the best character customization?"},
+    {id:"g25", q:"Which game do I think has the best DLC?"},
+    {id:"g26", q:"Which game has the most emotional moment?"},
+    {id:"g27", q:"Which game has the best tutorial?"},
+    {id:"g28", q:"Which game has the best map or level design?"},
+    {id:"g29", q:"Which game has the best co-op experience?"},
+    {id:"g30", q:"Which game has the best single-player campaign?"},
+    {id:"g31", q:"Which game has the best lore or world-building?"},
+    {id:"g32", q:"Which game has the most satisfying progression system?"},
+    {id:"g33", q:"Which game do I think aged the best?"},
+    {id:"g34", q:"Which game has the best stealth mechanics?"},
+    {id:"g35", q:"Which game do I think has the most replayability?"},
+    {id:"g36", q:"Which game has the best boss fights?"},
+    {id:"g37", q:"Which game has the best dialogue?"},
+    {id:"g38", q:"Which game has the best relationship or companion system?"},
+    {id:"g39", q:"Which game series do I think peaked with its first entry?"},
+    {id:"g40", q:"Which game has the best atmosphere?"},
+    {id:"g41", q:"Which game has the best graphics for its time?"},
+    {id:"g42", q:"Which game has the most emotional story moment?"},
+    {id:"g43", q:"Which game has the best Easter eggs?"},
+    {id:"g44", q:"Which game has the best competitive scene?"},
+    {id:"g45", q:"Which game has the best character design?"},
+    {id:"g46", q:"Which game do I think had the most cultural impact?"},
+    {id:"g47", q:"Which game has the best magic or power system?"},
+    {id:"g48", q:"Which game do I think is the best licensed game?"},
+    {id:"g49", q:"Which game made me feel the most accomplished?"},
+    {id:"g50", q:"Which game has the best voice acting?"},
+    {id:"g51", q:"Which game has the best morality system?"},
+    {id:"g52", q:"Which game has the best post-apocalyptic setting?"},
+    {id:"g53", q:"Which game has the best detective or mystery mechanics?"},
+    {id:"g54", q:"Which game series do I think needs a break?"},
+    {id:"g55", q:"Which game has the best rhythm mechanics?"},
+    {id:"g56", q:"Which game do I think is perfect from start to finish?"},
+    {id:"g57", q:"Which game has the best speedrunning community?"},
+    {id:"g58", q:"Which game has the best underwater or space level?"},
+    {id:"g59", q:"Which game has the best loading screen tips or mini-games?"},
+    {id:"g60", q:"Which game do I think defined its genre?"},
+  ],
+  music: [
+    {id:"mu01", q:"What is my favorite album of all time?"},
+    {id:"mu02", q:"Who is my favorite artist or band?"},
+    {id:"mu03", q:"What is my favorite song of all time?"},
+    {id:"mu04", q:"Which album has my favorite opening track?"},
+    {id:"mu05", q:"Which album has my favorite closing track?"},
+    {id:"mu06", q:"Which album has the best cover art in my opinion?"},
+    {id:"mu07", q:"Which artist do I think is overrated?"},
+    {id:"mu08", q:"Which artist do I think is underrated?"},
+    {id:"mu09", q:"Which album do I consider criminally overlooked?"},
+    {id:"mu10", q:"Which artist do I think everyone should listen to?"},
+    {id:"mu11", q:"What is my favorite live album or concert recording?"},
+    {id:"mu12", q:"Which album do I think has no skips?"},
+    {id:"mu13", q:"What is my favorite debut album?"},
+    {id:"mu14", q:"Which artist has my favorite discography overall?"},
+    {id:"mu15", q:"What is my favorite guilty pleasure song or artist?"},
+    {id:"mu16", q:"Which album fits not usually my thing but I love it?"},
+    {id:"mu17", q:"What is my most nostalgic album or song?"},
+    {id:"mu18", q:"Which artist do I wish I could see live?"},
+    {id:"mu19", q:"What is my favorite song to play loud in the car?"},
+    {id:"mu20", q:"Which album do I think everyone should hear at least once?"},
+    {id:"mu21", q:"What is my favorite genre of music to listen to in the gym?"},
+    {id:"mu22", q:"What is my most hated music genre?"},
+    {id:"mu23", q:"Which song has had the biggest impact on my life?"},
+    {id:"mu24", q:"What is my favorite childhood artist?"},
+    {id:"mu25", q:"Which album do I think has the best track listing order?"},
+    {id:"mu26", q:"Which artist do I think gives the best interviews?"},
+    {id:"mu27", q:"Which music video is my favorite?"},
+    {id:"mu28", q:"Which artist has the best stage presence?"},
+    {id:"mu29", q:"Which album changed how I listen to music?"},
+    {id:"mu30", q:"Which artist do I think writes the best lyrics?"},
+    {id:"mu31", q:"Which song do I think is perfectly produced?"},
+    {id:"mu32", q:"Which album do I think is the most sonically unique?"},
+    {id:"mu33", q:"Which artist do I think has the best collaborations?"},
+    {id:"mu34", q:"Which song has the best bridge?"},
+    {id:"mu35", q:"Which artist do I think is the best storyteller?"},
+    {id:"mu36", q:"Which song do I think should have been longer?"},
+    {id:"mu37", q:"Which artist do I think has evolved the most?"},
+    {id:"mu38", q:"Which song do I skip every time but secretly like?"},
+    {id:"mu39", q:"Which album is my go-to for a road trip?"},
+    {id:"mu40", q:"Which artist has the most distinctive voice?"},
+    {id:"mu41", q:"Which song has the best opening line?"},
+    {id:"mu42", q:"Which album do I listen to from start to finish most?"},
+    {id:"mu43", q:"Which artist do I think deserves a biopic?"},
+    {id:"mu44", q:"Which song makes me want to dance no matter what?"},
+    {id:"mu45", q:"Which album do I think is underappreciated in an artist's catalog?"},
+    {id:"mu46", q:"Which artist do I think has the best B-sides?"},
+    {id:"mu47", q:"Which song has the most memorable guitar riff?"},
+    {id:"mu48", q:"Which album would I play at a dinner party?"},
+    {id:"mu49", q:"Which album do I think will be remembered as a classic 50 years from now?"},
+    {id:"mu50", q:"Which artist do I think should collaborate but never has?"},
+    {id:"mu51", q:"Which song has the best rap verse?"},
+    {id:"mu52", q:"Which album would I use to introduce someone to my music taste?"},
+    {id:"mu53", q:"Which song has the most unexpected genre blend?"},
+    {id:"mu54", q:"Which artist do I think is the best live performer?"},
+    {id:"mu55", q:"Which artist do I think has the best relationship with their fans?"},
+    {id:"mu56", q:"Which song has the best use of silence?"},
+    {id:"mu57", q:"Which song do I think has the best music video concept?"},
+    {id:"mu58", q:"Which artist do I think peaked too early?"},
+    {id:"mu59", q:"Which song has the best instrumental break?"},
+    {id:"mu60", q:"Which artist's second album do I think is their best?"},
+  ],
+  boardgames: [
+    {id:"bg01", q:"What is my favorite board game of all time?"},
+    {id:"bg02", q:"Which board game do I think is overrated?"},
+    {id:"bg03", q:"Which board game do I think is underrated?"},
+    {id:"bg04", q:"Which board game do I consider criminally overlooked?"},
+    {id:"bg05", q:"Which board game do I think everyone should play?"},
+    {id:"bg06", q:"Which board game is my go-to for a party?"},
+    {id:"bg07", q:"Which board game is best for two players?"},
+    {id:"bg08", q:"Which board game do I think has the best theme?"},
+    {id:"bg09", q:"Which board game has my favorite artwork?"},
+    {id:"bg10", q:"Which board game has the most satisfying mechanics?"},
+    {id:"bg11", q:"Which board game do I play to turn my brain off?"},
+    {id:"bg12", q:"Which board game takes too long but I love it anyway?"},
+    {id:"bg13", q:"Which board game has my favorite puzzle element?"},
+    {id:"bg14", q:"Which board game made me the most competitive?"},
+    {id:"bg15", q:"Which board game has the steepest learning curve worth climbing?"},
+    {id:"bg16", q:"Which board game would I bring to a deserted island?"},
+    {id:"bg17", q:"Which board game is my biggest guilty pleasure?"},
+    {id:"bg18", q:"Which board game has the best replayability?"},
+    {id:"bg19", q:"Which board game fits not usually my thing but I love it?"},
+    {id:"bg20", q:"Which board game has the best expansion?"},
+    {id:"bg21", q:"Which board game is best for introducing newcomers?"},
+    {id:"bg22", q:"Which board game has the best player interaction?"},
+    {id:"bg23", q:"Which board game has caused the most arguments?"},
+    {id:"bg24", q:"Which board game has the best cooperative experience?"},
+    {id:"bg25", q:"Which board game has the best social deduction element?"},
+    {id:"bg26", q:"Which board game has the best engine building?"},
+    {id:"bg27", q:"Which board game has the best deck building?"},
+    {id:"bg28", q:"Which board game has the best worker placement?"},
+    {id:"bg29", q:"Which board game has the best area control?"},
+    {id:"bg30", q:"Which board game has my favorite dice mechanic?"},
+    {id:"bg31", q:"Which board game has the best push your luck element?"},
+    {id:"bg32", q:"Which board game surprised me the most?"},
+    {id:"bg33", q:"Which board game has the best thematic immersion?"},
+    {id:"bg34", q:"Which board game do I think needs a digital adaptation?"},
+    {id:"bg35", q:"Which board game has the best solo mode?"},
+    {id:"bg36", q:"Which board game has the most iconic box art?"},
+    {id:"bg37", q:"Which board game do I think has aged the best?"},
+    {id:"bg38", q:"Which board game has the funniest moments?"},
+    {id:"bg39", q:"Which board game has the most tense endgame?"},
+    {id:"bg40", q:"Which board game has my favorite resource management?"},
+    {id:"bg41", q:"Which board game has the best asymmetric factions or roles?"},
+    {id:"bg42", q:"Which board game taught me something new?"},
+    {id:"bg43", q:"Which board game has the best legacy or campaign mode?"},
+    {id:"bg44", q:"Which board game has the best hidden information element?"},
+    {id:"bg45", q:"Which board game has the best economic system?"},
+    {id:"bg46", q:"Which board game has the most memorable single moment?"},
+    {id:"bg47", q:"Which board game has the best spatial puzzle?"},
+    {id:"bg48", q:"Which board game made me want to read more about its theme?"},
+    {id:"bg49", q:"Which board game has the best speed or real-time element?"},
+    {id:"bg50", q:"Which board game is my most recent obsession?"},
+    {id:"bg51", q:"Which board game has the best storytelling element?"},
+    {id:"bg52", q:"Which board game pairs best with food and drinks?"},
+    {id:"bg53", q:"Which board game has the best catch-up mechanic?"},
+    {id:"bg54", q:"Which board game has changed my perspective on tabletop gaming?"},
+    {id:"bg55", q:"Which board game has the most satisfying victory condition?"},
+    {id:"bg56", q:"Which board game has made me the most friends?"},
+    {id:"bg57", q:"Which board game do I think has the worst rulebook?"},
+    {id:"bg58", q:"Which board game do I think has the best component quality?"},
+    {id:"bg59", q:"Which board game has the best roll-and-write mechanic?"},
+    {id:"bg60", q:"Which board game do I think is most improved by its expansions?"},
+  ],
+  books: [
+    {id:"bk01", q:"What is my favorite book of all time?"},
+    {id:"bk02", q:"Who is my favorite author?"},
+    {id:"bk03", q:"What is my favorite fiction book?"},
+    {id:"bk04", q:"What is my favorite non-fiction book?"},
+    {id:"bk05", q:"Which book do I think everyone should read?"},
+    {id:"bk06", q:"Which book changed my life?"},
+    {id:"bk07", q:"Which book do I think is overrated?"},
+    {id:"bk08", q:"Which book do I think is underrated?"},
+    {id:"bk09", q:"Which book do I consider criminally overlooked?"},
+    {id:"bk10", q:"Which book has my favorite protagonist?"},
+    {id:"bk11", q:"Which book has my favorite villain?"},
+    {id:"bk12", q:"Which book has the best ending?"},
+    {id:"bk13", q:"Which book has my favorite opening line?"},
+    {id:"bk14", q:"Which book made me cry the most?"},
+    {id:"bk15", q:"Which book made me laugh the hardest?"},
+    {id:"bk16", q:"Which book scared me the most?"},
+    {id:"bk17", q:"Which book has my favorite world-building?"},
+    {id:"bk18", q:"Which book series do I think is the best?"},
+    {id:"bk19", q:"Which book do I wish had a sequel?"},
+    {id:"bk20", q:"Which book do I think has the best film or TV adaptation?"},
+    {id:"bk21", q:"Which book do I think has the worst adaptation?"},
+    {id:"bk22", q:"Which book world would I most want to live inside?"},
+    {id:"bk23", q:"Which book do I think has the best prose style?"},
+    {id:"bk24", q:"Which book was the biggest page-turner for me?"},
+    {id:"bk25", q:"Which book do I always recommend to friends?"},
+    {id:"bk26", q:"Which book did I never finish but think about often?"},
+    {id:"bk27", q:"Which book surprised me the most?"},
+    {id:"bk28", q:"Which book has the best plot twist?"},
+    {id:"bk29", q:"Which book has my favorite friendship or relationship?"},
+    {id:"bk30", q:"Which book fits not usually my thing but I love it?"},
+    {id:"bk31", q:"Which book has my favorite magic or power system?"},
+    {id:"bk32", q:"Which book has the most memorable opening chapter?"},
+    {id:"bk33", q:"Which book has the best ensemble cast of characters?"},
+    {id:"bk34", q:"Which book has the most vivid setting?"},
+    {id:"bk35", q:"Which debut novel is my favorite?"},
+    {id:"bk36", q:"Which book has the best dialogue?"},
+    {id:"bk37", q:"Which author do I think writes the best villains?"},
+    {id:"bk38", q:"Which book has the most satisfying character arc?"},
+    {id:"bk39", q:"Which book do I think is most ahead of its time?"},
+    {id:"bk40", q:"Which book has the best unreliable narrator?"},
+    {id:"bk41", q:"Which book series do I think went on too long?"},
+    {id:"bk42", q:"Which book series do I think was cancelled too soon?"},
+    {id:"bk43", q:"Which book do I wish I could read for the first time again?"},
+    {id:"bk44", q:"Which author has my favorite writing voice?"},
+    {id:"bk45", q:"Which book has the most thought-provoking premise?"},
+    {id:"bk46", q:"Which book has the best exploration of a real historical event?"},
+    {id:"bk47", q:"Which non-fiction book reads like a novel?"},
+    {id:"bk48", q:"Which book has the best found family dynamic?"},
+    {id:"bk49", q:"Which book do I think is the best comfort read?"},
+    {id:"bk50", q:"Which biography or memoir is my favorite?"},
+    {id:"bk51", q:"Which book has the most iconic cover design?"},
+    {id:"bk52", q:"Which author do I think is the most consistent across their catalog?"},
+    {id:"bk53", q:"Which book has changed how I see the world?"},
+    {id:"bk54", q:"Which book would I give as a gift most often?"},
+    {id:"bk55", q:"Which book do I think has the best title?"},
+    {id:"bk56", q:"Which book has the best use of an unreliable timeline?"},
+    {id:"bk57", q:"Which book do I think would make the best video game?"},
+    {id:"bk58", q:"Which author do I think deserves more recognition?"},
+    {id:"bk59", q:"Which book has the most quotable writing?"},
+    {id:"bk60", q:"Which book has the most satisfying series finale?"},
+  ]
+};
+
+const QUESTIONS_PER_QUIZ = 20;
+
+function getPoolKey(type) {
+  return `cq-used-${type}`;
 }
 
-function renderCreatorForm() {
-  // Sync type buttons
-  ['Movies','TV','Games'].forEach(t => {
-    const id = 'ctype' + t;
-    const btn = document.getElementById(id);
-    if (btn) btn.className = (t.toLowerCase() === quizType || (t === 'TV' && quizType === 'tv')) ? 'primary' : '';
-  });
-  // Fix ctype button logic
-  document.getElementById('ctypeMovies').className = quizType === 'movies' ? 'primary' : '';
-  document.getElementById('ctypeTV').className     = quizType === 'tv'     ? 'primary' : '';
-  document.getElementById('ctypeGames').className  = quizType === 'games'  ? 'primary' : '';
+function getNextQuestions(type) {
+  const pool = QUESTION_POOLS[type] ?? QUESTION_POOLS.movies;
+  const usedRaw = localStorage.getItem(getPoolKey(type));
+  let used = [];
+  try { used = usedRaw ? JSON.parse(usedRaw) : []; } catch(e) { used = []; }
 
-  const questions = getCreatorQuestions();
+  // Filter out already-used questions
+  let available = pool.filter(q => !used.includes(q.id));
+
+  // If not enough available, reset and start fresh
+  if (available.length < QUESTIONS_PER_QUIZ) {
+    used = [];
+    available = [...pool];
+    localStorage.removeItem(getPoolKey(type));
+  }
+
+  // Shuffle and pick 20
+  const shuffled = [...available].sort(() => Math.random() - 0.5);
+  const picked = shuffled.slice(0, QUESTIONS_PER_QUIZ);
+
+  // Save used IDs
+  const newUsed = [...used, ...picked.map(q => q.id)];
+  localStorage.setItem(getPoolKey(type), JSON.stringify(newUsed));
+
+  return picked;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   CREATOR FORM
+═══════════════════════════════════════════════════════════ */
+function renderCreatorForm() {
+  document.getElementById('ctypeMovies').className    = quizType === 'movies'     ? 'primary' : '';
+  document.getElementById('ctypeTV').className        = quizType === 'tv'         ? 'primary' : '';
+  document.getElementById('ctypeGames').className     = quizType === 'games'      ? 'primary' : '';
+  document.getElementById('ctypeMusic').className     = quizType === 'music'      ? 'primary' : '';
+  document.getElementById('ctypeBooks').className     = quizType === 'books'      ? 'primary' : '';
+  document.getElementById('ctypeBoardgames').className= quizType === 'boardgames' ? 'primary' : '';
+
+  const questions = getNextQuestions(quizType);
   const form = document.getElementById('creatorForm');
+
+  // Store current question IDs for buildFromCreator to reference
+  form.dataset.questionIds = JSON.stringify(questions.map(q => q.id));
+
   form.innerHTML = questions.map((q, i) => `
     <div class="creator-row">
-      <div class="creator-question">${q}</div>
+      <div class="creator-question">${q.q}</div>
       <input class="creator-input" placeholder="Your answer…" id="ca_${i}" autocomplete="off">
       <input class="creator-input" placeholder="e.g. Show or film name" id="ch_${i}" autocomplete="off">
     </div>
   `).join('');
+
+  // Show how many quizzes remain before reset
+  const pool = QUESTION_POOLS[quizType];
+  const usedRaw = localStorage.getItem(getPoolKey(quizType));
+  let used = [];
+  try { used = usedRaw ? JSON.parse(usedRaw) : []; } catch(e) {}
+  const remaining = Math.floor((pool.length - used.length) / QUESTIONS_PER_QUIZ);
+  const existingBadge = document.getElementById('questionPoolBadge');
+  if (existingBadge) existingBadge.remove();
+  const badge = document.createElement('div');
+  badge.id = 'questionPoolBadge';
+  badge.style.cssText = 'font-size:11px;color:var(--muted);text-align:right;margin-bottom:8px;';
+  badge.textContent = remaining > 0
+    ? `${remaining} fresh set${remaining > 1 ? 's' : ''} of questions remaining before topics repeat`
+    : `All question sets used — topics will reset after this quiz`;
+  form.before(badge);
 }
 
 /* ═══════════════════════════════════════════════════════════
    BUILD FROM CREATOR
 ═══════════════════════════════════════════════════════════ */
 window.buildFromCreator = async function() {
-  const questions = getCreatorQuestions();
+  const form = document.getElementById('creatorForm');
+  const questionIds = JSON.parse(form.dataset.questionIds || '[]');
+  const pool = QUESTION_POOLS[quizType] ?? QUESTION_POOLS.movies;
   const base = [];
 
-  questions.forEach((q, i) => {
+  questionIds.forEach((id, i) => {
+    const qObj = pool.find(q => q.id === id);
+    if (!qObj) return;
     const answer = document.getElementById(`ca_${i}`)?.value.trim();
     const hint   = document.getElementById(`ch_${i}`)?.value.trim();
-    if (!answer) return; // skip blank questions
+    if (!answer) return;
 
     base.push({
-      id: `q${i}_${Math.random().toString(36).slice(2,6)}`,
-      question: q,
+      id: `${id}_${Math.random().toString(36).slice(2,6)}`,
+      question: qObj.q,
       options: [{
-        id: `q${i}_o0_${Math.random().toString(36).slice(2,6)}`,
+        id: `${id}_o0_${Math.random().toString(36).slice(2,6)}`,
         text: answer,
         correct: true,
         searchHint: hint || null
@@ -1414,9 +1937,8 @@ window.buildFromCreator = async function() {
     let generated = [];
     let attempts = 0;
     while (attempts < 3) {
-      generated = await generateWrongAnswers(q.question, correct.text);
+      generated = await generateWrongAnswers(q.question, correct.text, correct.searchHint);
       if (generated.length > 0) break;
-      // If empty (likely 429), wait and retry
       attempts++;
       if (attempts < 3) {
         labelEl.textContent = `Rate limited — retrying ${i + 1}/${base.length} in 15s…`;
@@ -1424,14 +1946,19 @@ window.buildFromCreator = async function() {
       }
     }
 
+    // For music with a search hint, give wrong answers the same hint format
+    // so they also get "Known for:" labels during enrichment
     const newOpts = generated.map((text, oi) => ({
       id: `${q.id}_gen${oi}_${Math.random().toString(36).slice(2,6)}`,
-      text, correct: false, aiGenerated: true
+      text,
+      correct: false,
+      aiGenerated: true,
+      // Pass artistHint so wrong answers also search by artist and show "Known for:"
+      searchHint: (quizType === 'music' && correct.searchHint) ? text : null
     }));
     q.options = [correct, ...newOpts];
     fillEl.style.width = `${5 + Math.round(((i + 1) / base.length) * 20)}%`;
 
-    // Small delay between requests to stay under per-minute limit
     if (i < base.length - 1) await new Promise(r => setTimeout(r, 2500));
   }
 
@@ -1446,6 +1973,18 @@ window.buildFromCreator = async function() {
       labelEl.textContent = `Fetching images… (${done}/${total})`;
       return enriched;
     }));
+
+    // Consistency fix: if ANY option in this question has a knownFor,
+    // mark all options as person type so "Known for:" shows consistently
+    const hasAnyKnownFor = q.options.some(o => o.knownFor);
+    if (hasAnyKnownFor) {
+      q.options = q.options.map(o => ({
+        ...o,
+        resultType: o.resultType || "person",
+        knownFor: o.knownFor || o.text
+      }));
+    }
+
     shuffle(q.options);
   }
 
@@ -1474,9 +2013,9 @@ function toggleInstructions() {
 
 function setQuizType(type) {
   quizType = type;
-  const idMap = { movies: 'typeMovies', tv: 'typeTV', games: 'typeGames', music: 'typeMusic' };
-  const cidMap = { movies: 'ctypeMovies', tv: 'ctypeTV', games: 'ctypeGames', music: 'ctypeMusic' };
-  ['movies','tv','games','music'].forEach(t => {
+  const idMap  = { movies:'typeMovies', tv:'typeTV', games:'typeGames', music:'typeMusic', books:'typeBooks', boardgames:'typeBoardgames' };
+  const cidMap = { movies:'ctypeMovies', tv:'ctypeTV', games:'ctypeGames', music:'ctypeMusic', books:'ctypeBooks', boardgames:'ctypeBoardgames' };
+  Object.keys(idMap).forEach(t => {
     const btn  = document.getElementById(idMap[t]);
     const cbtn = document.getElementById(cidMap[t]);
     if (btn)  btn.className  = t === type ? 'primary' : '';
@@ -1490,14 +2029,17 @@ function setQuizType(type) {
 ═══════════════════════════════════════════════════════════ */
 window.addEventListener("DOMContentLoaded", () => {
   renderCreatorForm();
-  checkAccess().then(() => {
-    const params  = new URLSearchParams(window.location.search);
-    const quizURL = params.get("quiz");
-    if (quizURL) {
-      switchMode('import');
-      document.getElementById("jsonUrlInput").value = quizURL;
-      loadFromURL();
-    }
+  checkForResultsPage().then(isResults => {
+    if (isResults) return; // results page handles everything
+    checkAccess().then(() => {
+      const params  = new URLSearchParams(window.location.search);
+      const quizURL = params.get("quiz");
+      if (quizURL) {
+        switchMode('import');
+        document.getElementById("jsonUrlInput").value = quizURL;
+        loadFromURL();
+      }
+    });
   });
 });
 
@@ -1533,27 +2075,50 @@ function convertCSVToQuiz(raw) {
 /* ═══════════════════════════════════════════════════════════
    AI WRONG ANSWER GENERATION
 ═══════════════════════════════════════════════════════════ */
-async function generateWrongAnswers(question, correctAnswer) {
-  const typeLabel = quizType === 'tv' ? 'TV show' : quizType === 'games' ? 'video game' : quizType === 'music' ? 'music artist or album' : 'movie';
-  const hasActorFormat = /\(.+\)/.test(correctAnswer);
+async function generateWrongAnswers(question, correctAnswer, correctSearchHint = null) {
+  const typeLabel = quizType === 'tv' ? 'TV show'
+    : quizType === 'games'      ? 'video game'
+    : quizType === 'music'      ? 'music artist, album, or song'
+    : quizType === 'books'      ? 'book or author'
+    : quizType === 'boardgames' ? 'board game'
+    : 'movie';
+  const isMusic   = quizType === 'music';
+  const isBooks   = quizType === 'books';
+  const isGenre   = /genre/i.test(question);
 
-  const isGenre = /genre/i.test(question);
+  // Only detect actor format for non-music quizzes
+  // Music titles often have parentheses e.g. "I Know There's Gonna Be (Good Times)"
+  const hasActorFormat = !isMusic && /\(([^)]+)\)/.test(correctAnswer);
+
+  // For music with a search hint (artist), tell AI to generate same-artist-style answers
+  const musicArtistContext = isMusic && correctSearchHint
+    ? `The correct answer is associated with the artist "${correctSearchHint}". Generate wrong answers from artists with a SIMILAR sound or genre — do NOT use actors, TV characters, or unrelated names.`
+    : "";
 
   const formatInstruction = isGenre
-    ? `The correct answer is a music genre. Generate 3 other real music genres as wrong answers. Do NOT generate artist names, album titles, or song titles — only genre names.`
+    ? `The correct answer is a music genre. Generate 3 other real music genres as wrong answers. Do NOT generate artist names, album titles, song titles, or any other non-genre answers.`
     : hasActorFormat
     ? `IMPORTANT: The correct answer uses the format "Character Name (Actor Name)". Return all 3 wrong answers in the exact same format — e.g. "Walter White (Bryan Cranston)". Pick characters from DIFFERENT shows — do not use the same show more than once.`
+    : isMusic
+    ? `Generate 3 real ${typeLabel}s as wrong answers. ${musicArtistContext} Match the same TYPE as the correct answer — if it's an album title, give album titles; if it's an artist name, give artist names; if it's a song title, give song titles. Do NOT mix types. Do NOT include actor names, TV show characters, or anything unrelated to music.`
+    : isBooks
+    ? `Generate 3 real books or authors as wrong answers. Match the same TYPE — if it's a book title, give book titles; if it's an author name, give author names. Pick similar genre, era, or style. Do NOT invent fake titles or authors.`
     : `Only use real, actually existing ${typeLabel}s. Do NOT invent fake titles. Pick from different franchises or creators — do not cluster around the same show, series, or universe.`;
+
+  // Detect what kind of music answer this is to help AI match style
+  const musicStyleHint = isMusic && !isGenre ? `
+- The correct answer appears to be: ${correctSearchHint ? `an album/song by ${correctSearchHint}` : "a music title or artist name"}
+- Match the same era and genre as the correct answer
+- All 3 wrong answers must be the same TYPE (album = album, artist = artist, song = song)` : "";
 
   const prompt = `Generate exactly 3 wrong answer options for this quiz question about ${typeLabel}s.
 Question: "${question}"
 Correct answer: "${correctAnswer}"
 Rules:
 - ${formatInstruction}
-- Same category/type as the correct answer
 - Similar era, genre, or style — make them feel like plausible alternatives
 - Do NOT include the correct answer
-- Do NOT number them or explain
+- Do NOT number them or explain${musicStyleHint}
 Return ONLY a JSON array of 3 strings. Example: ["Option A", "Option B", "Option C"]`;
 
   // Check if dev Anthropic override is filled in
@@ -1635,8 +2200,13 @@ async function enrichOption(opt) {
       if (/genre/i.test(opt.searchHint || '') || /genre/i.test(opt.text || '')) {
         return { ...opt, resultType: "music", image: null, knownFor: null };
       }
+
       const parenArtist = opt.text.match(/\(([^)]+)\)/);
-      const artistHint  = opt.searchHint || (parenArtist ? parenArtist[1] : null);
+      // For music, only use paren match as artist hint if it doesn't look like
+      // part of a song/album title (i.e. the paren content is a short name, not a phrase)
+      const parenContent = parenArtist?.[1] ?? "";
+      const parenIsArtist = parenContent.length < 40 && !parenContent.includes(",") && !/good times|feat|ft\.|remix/i.test(parenContent);
+      const artistHint  = opt.searchHint || (parenIsArtist ? parenContent : null);
       const trackName   = opt.text.replace(/\(.*?\)/g, "").trim();
 
       // Try album search first, then artist
@@ -1669,6 +2239,30 @@ async function enrichOption(opt) {
         image: image || null,
         knownFor: isPersonType ? (album?.artist || null) : null
       };
+    }
+
+    if (quizType === 'boardgames') {
+      try {
+        const res = await wfetch(`${WORKER_URL}/bgg?query=${encodeURIComponent(query)}`).then(r => r.json());
+        return { ...opt, resultType: "boardgame", image: res.image || res.thumbnail || null, knownFor: null };
+      } catch { return opt; }
+    }
+
+    if (quizType === 'books') {
+      try {
+        const res = await wfetch(`${WORKER_URL}/hardcover`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ query })
+        }).then(r => r.json());
+        const book = res.result;
+        return {
+          ...opt,
+          resultType: isPersonType ? "person" : "book",
+          image: book?.image ?? null,
+          knownFor: book?.author ? (isPersonType ? book.author : null) : null
+        };
+      } catch { return opt; }
     }
 
     if (quizType === 'games') {
@@ -1940,6 +2534,7 @@ function renderQuiz() {
 
   document.getElementById("scoreBanner").style.display = "none";
   document.getElementById("postSubmitActions").style.display = "none";
+  document.getElementById("resultsLinkOutput").style.display = "none";
   document.getElementById("submitBtn").disabled = false;
   document.getElementById("submitBtn").style.display = "";
 
@@ -1992,7 +2587,8 @@ function renderQuiz() {
       const img = opt.image
         ? `<img class="option-poster" src="${opt.image}" alt="" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">`
         : '';
-      const placeholder = `<div class="option-poster-placeholder" style="${opt.image ? 'display:none' : ''}">🎬</div>`;
+      const placeholderEmoji = quizType === 'music' ? '🎵' : quizType === 'books' ? '📚' : quizType === 'boardgames' ? '🎲' : '🎬';
+      const placeholder = `<div class="option-poster-placeholder" style="${opt.image ? 'display:none' : ''}">${placeholderEmoji}</div>`;
       // Only show "Known for" when the result resolved as a person, never for movie titles
       const knownFor = opt.resultType === "person" && opt.knownFor
         ? `<div class="option-known-for">Known for: ${opt.knownFor}</div>` : '';
@@ -2138,8 +2734,160 @@ window.publishToGist = async function() {
 };
 
 /* ═══════════════════════════════════════════════════════════
-   DOWNLOAD RESULTS CARD
+   SHARE RESULTS
 ═══════════════════════════════════════════════════════════ */
+window.shareResults = async function() {
+  const btn = document.getElementById("shareResultsBtn");
+  btn.disabled = true;
+  btn.textContent = "Publishing…";
+
+  try {
+    // Build results payload
+    const score = userAnswers.filter((id, i) => quizData[i]?.options.find(o => o.id === id)?.correct).length;
+    const total = quizData.length;
+
+    // Get quiz URL from the share link input if available
+    const quizUrl = document.getElementById("jsonUrlInput")?.value?.trim() || null;
+
+    const answers = quizData.map((q, i) => {
+      const chosen  = q.options.find(o => o.id === userAnswers[i]);
+      const correct = q.options.find(o => o.correct);
+      return {
+        question:     q.question,
+        correct:      correct?.text ?? "",
+        chosen:       chosen?.text ?? "No answer",
+        correctImage: correct?.image ?? null,
+        chosenImage:  chosen?.image ?? null,
+        isRight:      chosen?.correct === true
+      };
+    });
+
+    const payload = {
+      type: "results",
+      creatorName: quizData.creatorName ?? null,
+      quizType,
+      quizUrl,
+      score,
+      total,
+      pct: Math.round((score / total) * 100),
+      takenAt: Date.now(),
+      answers
+    };
+
+    // Publish to Gist
+    const res = await wfetch(GIST_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "Accept": "application/vnd.github+json" },
+      body: JSON.stringify({
+        description: `CineQuiz Results${quizData.creatorName ? ` — How well do you know ${quizData.creatorName}?` : ""}`,
+        public: true,
+        files: { "results.json": { content: JSON.stringify(payload, null, 2) } }
+      })
+    });
+
+    if (!res.ok) throw new Error(`Gist failed: ${res.status}`);
+    const gist = await res.json();
+    const rawUrl = gist.files["results.json"].raw_url;
+
+    // Generate share link
+    const base = window.location.href.split("?")[0];
+    const shareLink = `${base}?results=${encodeURIComponent(rawUrl)}`;
+
+    document.getElementById("resultsShareLink").value = shareLink;
+    document.getElementById("resultsLinkOutput").style.display = "block";
+    toast("Results link ready!");
+
+    btn.textContent = "✓ Shared!";
+  } catch(e) {
+    toast(`Share failed: ${e.message}`);
+    btn.disabled = false;
+    btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="3" r="1.5"/><circle cx="4" cy="8" r="1.5"/><circle cx="12" cy="13" r="1.5"/><path d="M5.5 9l5 3M10.5 4.5l-5 3"/></svg> Share Results`;
+  }
+};
+
+window.copyResultsLink = function() {
+  const val = document.getElementById("resultsShareLink").value;
+  navigator.clipboard.writeText(val).then(() => toast("Results link copied!")).catch(() => {
+    document.getElementById("resultsShareLink").select();
+    document.execCommand("copy");
+    toast("Copied!");
+  });
+};
+
+/* ═══════════════════════════════════════════════════════════
+   RESULTS PAGE RENDERER  (?results= URL param)
+═══════════════════════════════════════════════════════════ */
+async function checkForResultsPage() {
+  const params = new URLSearchParams(window.location.search);
+  const resultsUrl = params.get("results");
+  if (!resultsUrl) return false;
+
+  // Hide everything except results page
+  document.getElementById("accessGate").style.display = "none";
+  document.getElementById("modeToggle").style.display = "none";
+  document.getElementById("creatorSection").style.display = "none";
+  document.getElementById("importSection").style.display = "none";
+  document.querySelector(".card")?.style && (document.querySelectorAll(".card").forEach(c => c.style.display = "none"));
+  document.querySelector(".header").style.display = "none";
+
+  const page = document.getElementById("resultsPage");
+  page.classList.add("visible");
+
+  try {
+    const res = await fetch(resultsUrl);
+    if (!res.ok) throw new Error("Could not load results");
+    const data = await res.json();
+
+    if (data.type !== "results") throw new Error("Not a results file");
+
+    // Populate hero
+    const name = data.creatorName;
+    document.getElementById("resultsTitleText").innerHTML = name
+      ? `How well do you know <span>${name}</span>?`
+      : `Quiz Results`;
+    document.getElementById("resultsScoreNum").textContent  = data.score;
+    document.getElementById("resultsScoreTotal").textContent = `/ ${data.total}`;
+    document.getElementById("resultsPct").textContent = `${data.pct}%`;
+
+    // Take quiz button
+    if (data.quizUrl) {
+      const base = window.location.href.split("?")[0];
+      document.getElementById("resultsTakeQuizBtn").href = `${base}?quiz=${encodeURIComponent(data.quizUrl)}`;
+    } else {
+      document.getElementById("resultsTakeQuizBtn").style.display = "none";
+    }
+
+    // Build answer rows
+    const grid = document.getElementById("resultsGrid");
+    const typeEmoji = { movies:"🎬", tv:"📺", games:"🎮", music:"🎵", books:"📚", boardgames:"🎲" };
+    const emoji = typeEmoji[data.quizType] ?? "🎬";
+
+    grid.innerHTML = data.answers.map(a => {
+      const imgSrc = a.isRight ? a.correctImage : a.chosenImage;
+      const imgEl = imgSrc
+        ? `<img class="results-row-img" src="${imgSrc}" alt="" onerror="this.style.display='none'">`
+        : `<div class="results-row-img-placeholder">${emoji}</div>`;
+      const wrongLine = !a.isRight && a.correct
+        ? `<div class="results-row-correct">✓ ${a.correct}</div>`
+        : "";
+      return `
+        <div class="results-row ${a.isRight ? 'right' : 'wrong'}">
+          <div class="results-row-icon">${a.isRight ? "✓" : "✕"}</div>
+          ${imgEl}
+          <div class="results-row-info">
+            <div class="results-row-question">${a.question}</div>
+            <div class="results-row-answer">${a.chosen || "No answer"}</div>
+            ${wrongLine}
+          </div>
+        </div>`;
+    }).join("");
+
+  } catch(e) {
+    page.innerHTML = `<div style="text-align:center;padding:60px;color:var(--muted);">Could not load results: ${e.message}</div>`;
+  }
+
+  return true;
+}
 window.downloadResultsCard = async function() {
   const score      = userAnswers.filter((id, i) => quizData[i]?.options.find(o => o.id === id)?.correct).length;
   const total      = quizData.length;
@@ -2322,150 +3070,20 @@ window.downloadTemplate = function() {
     "Option 4 Text","Option 4 Correct","Option 4 Points","Option 4 Search Hint"
   ];
 
-  const MOVIE_QUESTIONS = [
-    ["What is my favorite movie?",                                    "Favorite Movie"],
-    ["Who is my favorite director?",                                  "Favorite Director"],
-    ["Which is my favorite screenplay?",                              "Favorite Screenplay"],
-    ["Which film has my favorite cinematography?",                    "Favorite Cinematography"],
-    ["Which film has my favorite ending?",                            "Favorite Ending"],
-    ["Which movie do I think is overhated?",                          "Overhated Movie"],
-    ["Which movie do I think is underrated?",                         "Underrated Movie"],
-    ["Which movie do I think is overrated?",                          "Overrated Movie"],
-    ["Which movie do I think needs a sequel?",                        "A Movie That Needs a Sequel"],
-    ["Which movie do I consider criminally overlooked?",              "Criminally Overlooked Movie"],
-    ["Who is my favorite actor (specific performance)?",              "Favorite Actor"],
-    ["Who is my favorite actress (specific performance)?",            "Favorite Actress"],
-    ["Which film has the best score in my opinion?",                  "Best Movie Score"],
-    ["Which movie has the best songs in my opinion?",                 "Best Movie Song(s)"],
-    ["Which movie fits not usually my thing but I love it?",          "Not Usually My Thing But I Love It"],
-    ["Which movie is just so much fun?",                              "A Movie That Is Just So Much Fun"],
-    ["Whats the best movie to watch with friends?",                   "Best Movie to Watch With Friends"],
-    ["What is the best old movie in my opinion?",                     "Best Old Movie"],
-    ["What is my favorite long movie 3 or more hours?",               "Best Long Movie 3 Plus Hours"],
-    ["Which movie do I think everyone should watch?",                 "A Movie Everyone Should Watch"],
-    ["Who is my favorite movie villain?",                             "Favorite Movie Villain"],
-    ["Who is my favorite movie character of all time?",               "Favorite Movie Character"],
-    ["Who is my favorite comedic performance in a film?",             "Favorite Comedic Performance"],
-    ["What is my favorite animated movie?",                           "Favorite Animated Movie"],
-    ["Which film has my favorite ensemble cast?",                     "Favorite Ensemble Cast"],
-    ["Which film has my favorite opening scene?",                     "Favorite Opening Scene"],
-    ["Which film has my favorite plot twist?",                        "Favorite Plot Twist"],
-    ["Which film has my favorite single scene?",                      "Favorite Single Scene"],
-    ["Which film has my favorite monologue?",                         "Favorite Movie Monologue"],
-    ["What is my favorite horror movie?",                             "Favorite Horror Movie"],
-    ["What is my favorite sci-fi movie?",                             "Favorite Sci-Fi Movie"],
-    ["What is my favorite action movie?",                             "Favorite Action Movie"],
-    ["What is my favorite comedy?",                                   "Favorite Comedy"],
-    ["What is my favorite foreign language film?",                    "Favorite Foreign Language Film"],
-    ["What is my favorite documentary?",                              "Favorite Documentary"],
-    ["What is my favorite sports movie?",                             "Favorite Sports Movie"],
-    ["Which movie made me cry the most?",                             "Movie That Made Me Cry"],
-    ["Which movie scared me the most?",                               "Scariest Movie"],
-    ["Which movie made me laugh the hardest?",                        "Funniest Movie"],
-    ["Which movie do I wish I could watch for the first time again?", "Movie I Wish I Could Rewatch Fresh"],
-    ["What is my biggest guilty pleasure movie?",                     "Guilty Pleasure Movie"],
-    ["Which movie did I see too young?",                              "Movie I Saw Too Young"],
-    ["Which film has my favorite production design?",                 "Favorite Production Design"],
-    ["Which film has my favorite costume design?",                    "Favorite Costume Design"],
-    ["Which film has my favorite visual effects?",                    "Favorite Visual Effects"],
-    ["What is my favorite movie based on a true story?",              "Favorite True Story Movie"],
-    ["What is my favorite sequel that is better than the original?",  "Best Sequel Better Than Original"],
-    ["Which movie do I think has the worst ending?",                  "Movie With Worst Ending"],
-    ["Which film has my favorite final act?",                         "Favorite Final Act"],
-    ["Which movie do I think everyone should watch at least once?",   "Must Watch Once"],
-    ["Which movie would I never turn off if it came on TV?",          "Never Turn It Off"],
-  ];
-
-  const TV_QUESTIONS = [
-    ["What is my favorite TV show of all time?",                      "Favorite TV Show"],
-    ["Who is my favorite TV showrunner?",                             "Favorite Showrunner"],
-    ["What is my favorite TV drama?",                                 "Favorite TV Drama"],
-    ["What is my favorite TV comedy?",                                "Favorite TV Comedy"],
-    ["Who is my favorite TV villain?",                                "Favorite TV Villain"],
-    ["Who is my favorite TV character of all time?",                  "Favorite TV Character"],
-    ["Which TV show do I think is overrated?",                        "Overrated TV Show"],
-    ["Which TV show do I think is underrated?",                       "Underrated TV Show"],
-    ["Which TV show do I think was cancelled too soon?",              "Cancelled Too Soon"],
-    ["Which TV show do I think went on too long?",                    "Went On Too Long"],
-    ["Which TV show has my favorite series finale?",                  "Favorite Series Finale"],
-    ["Which TV show has my favorite pilot episode?",                  "Favorite Pilot Episode"],
-    ["Which TV show has my favorite theme song?",                     "Favorite Theme Song"],
-    ["Which TV show do I consider criminally overlooked?",            "Criminally Overlooked Show"],
-    ["What is my favorite limited series or miniseries?",             "Favorite Limited Series"],
-    ["Which TV show is just so much fun?",                            "Just So Much Fun"],
-    ["Which TV show fits not usually my thing but I love it?",        "Not Usually My Thing"],
-    ["What is the best old TV show in my opinion?",                   "Best Old TV Show"],
-    ["Which TV show do I think everyone should watch?",               "Everyone Should Watch"],
-    ["Which TV show do I most want to rewatch from the beginning?",   "Most Want to Rewatch"],
-  ];
-
-  const GAME_QUESTIONS = [
-    ["What is my favorite video game of all time?",                   "Favorite Game"],
-    ["Which game has my favorite story?",                             "Best Story"],
-    ["Which game has my favorite art style?",                         "Favorite Art Style"],
-    ["Which game has had the biggest personal impact on me?",         "Biggest Personal Impact"],
-    ["Which game has the best combat in my opinion?",                 "Best Combat"],
-    ["Which game do I think is overhated?",                           "Overhated"],
-    ["Which game do I think is underrated?",                          "Underrated"],
-    ["Which game do I think is overrated?",                           "Overrated"],
-    ["Which game do I think needs a remake?",                         "Needs a Remake"],
-    ["Which game do I consider criminally overlooked?",               "Criminally Overlooked"],
-    ["Which game has my favorite protagonist?",                       "Favorite Protagonist"],
-    ["Which game has my favorite antagonist or villain?",             "Favorite Antagonist"],
-    ["Which game has my favorite soundtrack?",                        "Best Soundtrack"],
-    ["What is my favorite multiplayer game?",                         "Best Multiplayer"],
-    ["Which game fits not usually my thing but I love it?",           "Not Usually My Thing But..."],
-    ["Which game do I play to turn my brain off?",                    "Turn My Brain Off"],
-    ["What is the best game to play with friends?",                   "Best With Friends"],
-    ["What is my favorite retro game?",                               "Best Retro Game"],
-    ["What is my most nostalgic childhood game?",                     "Nostalgic Childhood Game"],
-    ["Which game do I think everyone should play?",                   "Game Everyone Should Play"],
-  ];
-
-  const MUSIC_QUESTIONS = [
-    ["What is my favorite album of all time?",                        "Favorite Album"],
-    ["Who is my favorite artist or band?",                            "Favorite Artist"],
-    ["What is my favorite song of all time?",                         "Favorite Song"],
-    ["Which album has my favorite opening track?",                    "Favorite Opening Track"],
-    ["Which album has my favorite closing track?",                    "Favorite Closing Track"],
-    ["Which album has the best cover art in my opinion?",             "Best Album Cover Art"],
-    ["Which artist do I think is overrated?",                         "Overrated Artist"],
-    ["Which artist do I think is underrated?",                        "Underrated Artist"],
-    ["Which album do I consider criminally overlooked?",              "Criminally Overlooked Album"],
-    ["Which artist do I think everyone should listen to?",            "Everyone Should Listen To"],
-    ["What is my favorite live album or concert recording?",          "Favorite Live Album"],
-    ["Which album do I think has no skips?",                          "No Skips Album"],
-    ["What is my favorite debut album?",                              "Favorite Debut Album"],
-    ["Which artist has my favorite discography overall?",             "Favorite Discography"],
-    ["What is my favorite guilty pleasure song or artist?",           "Guilty Pleasure"],
-    ["Which album fits not usually my thing but I love it?",          "Not Usually My Thing"],
-    ["What is my most nostalgic album or song?",                      "Most Nostalgic"],
-    ["Which artist do I wish I could see live?",                      "Wish I Could See Live"],
-    ["What is my favorite song to play loud in the car?",             "Best Car Song"],
-    ["Which album do I think everyone should hear at least once?",    "Everyone Should Hear Once"],
-    ["What is my favorite genre of music to listen to in the gym?",   "Best Gym Music Genre"],
-    ["What is my most hated music genre?",                            "Most Hated Genre"],
-    ["Which song has had the biggest impact on my life?",             "Most Impactful Song"],
-    ["What is my favorite childhood artist?",                         "Favorite Artist From Childhood"],
-  ];
-
-  const qMap = { movies: MOVIE_QUESTIONS, tv: TV_QUESTIONS, games: GAME_QUESTIONS, music: MUSIC_QUESTIONS };
-  const questions = qMap[quizType] || MOVIE_QUESTIONS;
-  const filename  = `cinequiz_template_${quizType}.csv`;
-
+  const pool = QUESTION_POOLS[quizType] ?? QUESTION_POOLS.movies;
+  const filename = `cinequiz_template_${quizType}.csv`;
   const enc = v => /[,"\n]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v;
 
-  const rows = questions.map(([question, category]) => [
-    question, "Single Choice (Radio Button)", "Question points",
-    "1", "1", "TRUE", "", category, "TRUE",
-    "", "", "", "",   // option 1: text, correct, points, hint
-    "", "", "", "",   // option 2
-    "", "", "", "",   // option 3
-    "", "", "", ""    // option 4
+  const rows = pool.map(({id, q}) => [
+    q, "Single Choice (Radio Button)", "Question points",
+    "1", "1", "TRUE", "", id, "TRUE",
+    "", "", "", "",
+    "", "", "", "",
+    "", "", "", "",
+    "", "", "", ""
   ].map(enc).join(","));
 
   const csv = [headers.map(enc).join(","), ...rows].join("\n");
-
   const blob = new Blob([csv], { type: "text/csv" });
   const url  = URL.createObjectURL(blob);
   const a    = Object.assign(document.createElement("a"), { href: url, download: filename });
