@@ -2580,6 +2580,16 @@ window.loadFromURL = async function() {
     quizData = questions;
     quizData.creatorName = creatorName;
 
+    // Track play count silently — fire and forget
+    const quizUrlParam = document.getElementById("jsonUrlInput")?.value?.trim();
+    if (quizUrlParam) {
+      wfetch(`${WORKER_URL}/track-play`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ quizUrl: quizUrlParam })
+      }).catch(() => {}); // silent fail, never block the quiz loading
+    }
+
     // Save to cache for offline/reload resilience
     saveQuizToCache(url, quizData);
 
@@ -2845,8 +2855,21 @@ window.publishToGist = async function() {
 
     const rawUrl = gist.files["quiz.json"].raw_url;
     document.getElementById("jsonUrlInput").value = rawUrl;
-    setStatus("success", "Published! URL filled in — share link generated below.");
+    setStatus("success", "Published! Share link generated below.");
     generateShareLink();
+
+    // Fetch and show play count (will be 0 for new quizzes)
+    try {
+      const countRes = await wfetch(`${WORKER_URL}/play-count?quizUrl=${encodeURIComponent(rawUrl)}`).then(r => r.json());
+      const count = countRes.count ?? 0;
+      const existingCounter = document.getElementById("playCountDisplay");
+      if (existingCounter) existingCounter.remove();
+      const counter = document.createElement("div");
+      counter.id = "playCountDisplay";
+      counter.style.cssText = "font-size:12px;color:var(--muted);margin-top:8px;text-align:center;";
+      counter.textContent = count === 0 ? "🎬 No plays yet — share the link!" : `🎬 Taken ${count} time${count === 1 ? "" : "s"}`;
+      document.getElementById("linkOutput").appendChild(counter);
+    } catch(e) {}
 
   } catch (e) {
     setStatus("error", `Gist publish failed: ${e.message}`);
