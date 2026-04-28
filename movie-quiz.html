@@ -584,6 +584,64 @@
     transition: width 0.3s ease;
   }
 
+  /* ── GENERATION OVERLAY ── */
+  .gen-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(13,13,15,0.94);
+    backdrop-filter: blur(8px);
+    z-index: 200;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 24px;
+  }
+  .gen-overlay.visible { display: flex; }
+  .gen-overlay-eyebrow {
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--gold);
+    font-weight: 600;
+    margin-bottom: 16px;
+  }
+  .gen-overlay-title {
+    font-family: var(--font-display);
+    font-size: clamp(1.4rem, 4vw, 2rem);
+    font-style: italic;
+    color: var(--cream);
+    margin-bottom: 8px;
+  }
+  .gen-overlay-label {
+    font-size: 13px;
+    color: var(--muted);
+    margin-bottom: 28px;
+    min-height: 20px;
+    font-weight: 300;
+  }
+  .gen-overlay-bar-wrap {
+    width: min(480px, 90vw);
+    height: 4px;
+    background: var(--surface2);
+    border-radius: 2px;
+    overflow: hidden;
+    margin-bottom: 12px;
+  }
+  .gen-overlay-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--gold-dim), var(--gold));
+    border-radius: 2px;
+    width: 0%;
+    transition: width 0.4s ease;
+  }
+  .gen-overlay-step {
+    font-size: 12px;
+    color: var(--border);
+    font-weight: 300;
+  }
+
   /* Copied toast */
   .toast {
     position: fixed;
@@ -1147,6 +1205,8 @@
     Powered by <a href="https://www.themoviedb.org/" target="_blank" rel="noopener" style="color:var(--gold-dim); text-decoration:none;">TMDB</a>
     &nbsp;·&nbsp; <a href="https://rawg.io/" target="_blank" rel="noopener" style="color:var(--gold-dim); text-decoration:none;">RAWG</a>
     &nbsp;·&nbsp; <a href="https://www.last.fm/" target="_blank" rel="noopener" style="color:var(--gold-dim); text-decoration:none;">Last.fm</a>
+    &nbsp;·&nbsp; <a href="https://openlibrary.org/" target="_blank" rel="noopener" style="color:var(--gold-dim); text-decoration:none;">Open Library</a>
+    &nbsp;·&nbsp; <a href="https://boardgamegeek.com/" target="_blank" rel="noopener" style="color:var(--gold-dim); text-decoration:none;">BoardGameGeek</a>
     &nbsp;·&nbsp; <a href="https://workers.cloudflare.com/" target="_blank" rel="noopener" style="color:var(--gold-dim); text-decoration:none;">Cloudflare Workers AI</a>
     &nbsp;·&nbsp; <a href="https://resend.com/" target="_blank" rel="noopener" style="color:var(--gold-dim); text-decoration:none;">Resend</a>
   </div>
@@ -1169,6 +1229,17 @@
   <div style="text-align:center;margin-top:32px;font-size:12px;color:var(--muted);">
     cinequiz.quest
   </div>
+</div>
+
+<!-- GENERATION OVERLAY -->
+<div class="gen-overlay" id="genOverlay">
+  <div class="gen-overlay-eyebrow">✨ Building Your Quiz</div>
+  <div class="gen-overlay-title">Hang tight...</div>
+  <div class="gen-overlay-label" id="genOverlayLabel">Starting up…</div>
+  <div class="gen-overlay-bar-wrap">
+    <div class="gen-overlay-bar-fill" id="genOverlayFill"></div>
+  </div>
+  <div class="gen-overlay-step" id="genOverlayStep"></div>
 </div>
 
 <!-- TOAST -->
@@ -1916,9 +1987,17 @@ window.buildFromCreator = async function() {
 
   const creatorName = document.getElementById("creatorName")?.value.trim() || null;
 
-  // Switch to quiz area and run the same enrichment pipeline
-  document.getElementById('creatorSection').style.display = 'none';
+  // Show generation overlay
+  const overlay   = document.getElementById("genOverlay");
+  const overlayLbl = document.getElementById("genOverlayLabel");
+  const overlayFill = document.getElementById("genOverlayFill");
+  const overlayStep = document.getElementById("genOverlayStep");
+  overlay.classList.add("visible");
+  overlayLbl.textContent = `Generating wrong answers for ${base.length} question(s)…`;
+  overlayFill.style.width = "3%";
+  overlayStep.textContent = "Step 1 of 2 — AI generation";
 
+  // Also keep the existing enrichProgress in sync for the import section
   const enrichEl = document.getElementById("enrichProgress");
   const fillEl   = document.getElementById("progressFill");
   const labelEl  = document.getElementById("enrichLabel");
@@ -1933,6 +2012,8 @@ window.buildFromCreator = async function() {
     const q = base[i];
     const correct = q.options[0];
     labelEl.textContent = `Generating wrong answers… (${i + 1}/${base.length})`;
+    overlayLbl.textContent = `Generating wrong answers… (${i + 1}/${base.length})`;
+    overlayStep.textContent = "Step 1 of 2 — AI is thinking";
 
     let generated = [];
     let attempts = 0;
@@ -1942,6 +2023,8 @@ window.buildFromCreator = async function() {
       attempts++;
       if (attempts < 3) {
         labelEl.textContent = `Rate limited — retrying ${i + 1}/${base.length} in 15s…`;
+        overlayLbl.textContent = `Rate limited — retrying in 15s…`;
+        overlayStep.textContent = "Waiting for AI…";
         await new Promise(r => setTimeout(r, 15000));
       }
     }
@@ -1957,19 +2040,26 @@ window.buildFromCreator = async function() {
       searchHint: (quizType === 'music' && correct.searchHint) ? text : null
     }));
     q.options = [correct, ...newOpts];
-    fillEl.style.width = `${5 + Math.round(((i + 1) / base.length) * 20)}%`;
+    const aiPct = `${5 + Math.round(((i + 1) / base.length) * 40)}%`;
+    fillEl.style.width = aiPct;
+    overlayFill.style.width = aiPct;
 
     if (i < base.length - 1) await new Promise(r => setTimeout(r, 2500));
   }
 
-  // Step 2: TMDB/RAWG enrichment
+  // Step 2: image enrichment
   const total = base.flatMap(q => q.options).length;
   let done = 0;
+  overlayLbl.textContent = `Fetching images…`;
+  overlayStep.textContent = "Step 2 of 2 — Loading covers";
   for (const q of base) {
     q.options = await Promise.all(q.options.map(async opt => {
       const enriched = await enrichOption(opt);
       done++;
-      fillEl.style.width = `${25 + Math.round((done / total) * 75)}%`;
+      const imgPct = `${45 + Math.round((done / total) * 50)}%`;
+      fillEl.style.width = imgPct;
+      overlayFill.style.width = imgPct;
+      overlayLbl.textContent = `Fetching images… (${done}/${total})`;
       labelEl.textContent = `Fetching images… (${done}/${total})`;
       return enriched;
     }));
@@ -1989,6 +2079,11 @@ window.buildFromCreator = async function() {
     shuffle(q.options);
   }
 
+  overlayFill.style.width = "100%";
+  overlayLbl.textContent = "Almost done…";
+  await new Promise(r => setTimeout(r, 400)); // brief flash of 100%
+  overlay.classList.remove("visible");
+  overlayFill.style.width = "0%";
   enrichEl.style.display = "none";
   fillEl.style.width = "0%";
 
@@ -2678,6 +2773,23 @@ window.submitQuiz = function() {
   const pct     = Math.round((score / quizData.length) * 100);
   document.getElementById("scoreNumber").textContent = score;
   document.getElementById("scoreTotal").textContent  = `out of ${quizData.length} — ${pct}%`;
+
+  // Add "Create your own" CTA if viewing a shared quiz
+  const isSharedQuiz = !!new URLSearchParams(window.location.search).get("quiz");
+  let ctaBanner = document.getElementById("createYourOwnCTA");
+  if (!ctaBanner) {
+    ctaBanner = document.createElement("div");
+    ctaBanner.id = "createYourOwnCTA";
+    ctaBanner.style.cssText = "margin-top:16px;padding:16px;background:var(--surface2);border:1px solid var(--gold-dim);border-radius:8px;text-align:center;";
+    ctaBanner.innerHTML = `
+      <div style="font-size:12px;letter-spacing:0.1em;text-transform:uppercase;color:var(--gold-dim);font-weight:600;margin-bottom:6px;">Want to make your own?</div>
+      <div style="font-family:var(--font-display);font-style:italic;font-size:1.1rem;color:var(--cream);margin-bottom:12px;">Build a quiz about your own taste</div>
+      <a href="https://cinequiz.quest" style="display:inline-flex;align-items:center;gap:6px;padding:10px 20px;background:var(--gold);color:#0d0d0f;border-radius:6px;font-size:13px;font-weight:600;text-decoration:none;">✨ Create Your Quiz</a>
+    `;
+    banner.appendChild(ctaBanner);
+  }
+  ctaBanner.style.display = isSharedQuiz ? "block" : "none";
+
   banner.style.display = "block";
   banner.scrollIntoView({ behavior: "smooth", block: "start" });
 
