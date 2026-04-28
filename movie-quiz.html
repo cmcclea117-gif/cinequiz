@@ -1258,130 +1258,353 @@ function switchMode(mode) {
 }
 
 /* ═══════════════════════════════════════════════════════════
-   CREATOR FORM
+   QUESTION POOLS (60 per topic)
 ═══════════════════════════════════════════════════════════ */
-function getCreatorQuestions() {
-  const MOVIE_Q = [
-    "What is my favorite movie?","Who is my favorite director?","Which is my favorite screenplay?",
-    "Which film has my favorite cinematography?","Which film has my favorite ending?",
-    "Which movie do I think is overhated?","Which movie do I think is underrated?",
-    "Which movie do I think is overrated?","Which movie do I think needs a sequel?",
-    "Which movie do I consider criminally overlooked?","Who is my favorite actor (specific performance)?",
-    "Who is my favorite actress (specific performance)?","Which film has the best score in my opinion?",
-    "Which movie has the best songs in my opinion?","Which movie fits not usually my thing but I love it?",
-    "Which movie is just so much fun?","Whats the best movie to watch with friends?",
-    "What is the best old movie in my opinion?","What is my favorite long movie 3 or more hours?",
-    "Which movie do I think everyone should watch?","Who is my favorite movie villain?",
-    "Who is my favorite movie character of all time?","Who is my favorite comedic performance in a film?",
-    "What is my favorite animated movie?","Which film has my favorite ensemble cast?",
-    "Which film has my favorite opening scene?","Which film has my favorite plot twist?",
-    "Which film has my favorite single scene?","Which film has my favorite monologue?",
-    "What is my favorite horror movie?","What is my favorite sci-fi movie?",
-    "What is my favorite action movie?","What is my favorite comedy?",
-    "What is my favorite foreign language film?","What is my favorite documentary?",
-    "What is my favorite sports movie?","Which movie made me cry the most?",
-    "Which movie scared me the most?","Which movie made me laugh the hardest?",
-    "Which movie do I wish I could watch for the first time again?","What is my biggest guilty pleasure movie?",
-    "Which movie did I see too young?","Which film has my favorite production design?",
-    "Which film has my favorite costume design?","Which film has my favorite visual effects?",
-    "What is my favorite movie based on a true story?","What is my favorite sequel that is better than the original?",
-    "Which movie do I think has the worst ending?","Which film has my favorite final act?",
-    "Which movie do I think everyone should watch at least once?",
-    "Which movie would I never turn off if it came on TV?"
-  ];
-  const TV_Q = [
-    "What is my favorite TV show of all time?","Who is my favorite TV showrunner?",
-    "What is my favorite TV drama?","What is my favorite TV comedy?",
-    "Who is my favorite TV villain?","Who is my favorite TV character of all time?",
-    "Which TV show do I think is overrated?","Which TV show do I think is underrated?",
-    "Which TV show do I think was cancelled too soon?","Which TV show do I think went on too long?",
-    "Which TV show has my favorite series finale?","Which TV show has my favorite pilot episode?",
-    "Which TV show has my favorite theme song?","Which TV show do I consider criminally overlooked?",
-    "What is my favorite limited series or miniseries?","Which TV show is just so much fun?",
-    "Which TV show fits not usually my thing but I love it?","What is the best old TV show in my opinion?",
-    "Which TV show do I think everyone should watch?","Which TV show do I most want to rewatch from the beginning?"
-  ];
-  const GAME_Q = [
-    "What is my favorite video game of all time?","Which game has my favorite story?",
-    "Which game has my favorite art style?","Which game has had the biggest personal impact on me?",
-    "Which game has the best combat in my opinion?","Which game do I think is overhated?",
-    "Which game do I think is underrated?","Which game do I think is overrated?",
-    "Which game do I think needs a remake?","Which game do I consider criminally overlooked?",
-    "Which game has my favorite protagonist?","Which game has my favorite antagonist or villain?",
-    "Which game has my favorite soundtrack?","What is my favorite multiplayer game?",
-    "Which game fits not usually my thing but I love it?","Which game do I play to turn my brain off?",
-    "What is the best game to play with friends?","What is my favorite retro game?",
-    "What is my most nostalgic childhood game?","Which game do I think everyone should play?"
-  ];
-  const MUSIC_Q = [
-    "What is my favorite album of all time?",
-    "Who is my favorite artist or band?",
-    "What is my favorite song of all time?",
-    "Which album has my favorite opening track?",
-    "Which album has my favorite closing track?",
-    "Which album has the best cover art in my opinion?",
-    "Which artist do I think is overrated?",
-    "Which artist do I think is underrated?",
-    "Which album do I consider criminally overlooked?",
-    "Which artist do I think everyone should listen to?",
-    "What is my favorite live album or concert recording?",
-    "Which album do I think has no skips?",
-    "What is my favorite debut album?",
-    "Which artist has my favorite discography overall?",
-    "What is my favorite guilty pleasure song or artist?",
-    "Which album fits not usually my thing but I love it?",
-    "What is my most nostalgic album or song?",
-    "Which artist do I wish I could see live?",
-    "What is my favorite song to play loud in the car?",
-    "Which album do I think everyone should hear at least once?",
-    "What is my favorite genre of music to listen to in the gym?",
-    "What is my most hated music genre?",
-    "Which song has had the biggest impact on my life?",
-    "What is my favorite childhood artist?"
-  ];
-  return quizType === 'tv' ? TV_Q : quizType === 'games' ? GAME_Q : quizType === 'music' ? MUSIC_Q : MOVIE_Q;
+const QUESTION_POOLS = {
+  movies: [
+    {id:"m01", q:"What is my favorite movie?"},
+    {id:"m02", q:"Who is my favorite director?"},
+    {id:"m03", q:"Which is my favorite screenplay?"},
+    {id:"m04", q:"Which film has my favorite cinematography?"},
+    {id:"m05", q:"Which film has my favorite ending?"},
+    {id:"m06", q:"Which movie do I think is overhated?"},
+    {id:"m07", q:"Which movie do I think is underrated?"},
+    {id:"m08", q:"Which movie do I think is overrated?"},
+    {id:"m09", q:"Which movie do I think needs a sequel?"},
+    {id:"m10", q:"Which movie do I consider criminally overlooked?"},
+    {id:"m11", q:"Who is my favorite actor (specific performance)?"},
+    {id:"m12", q:"Who is my favorite actress (specific performance)?"},
+    {id:"m13", q:"Which film has the best score in my opinion?"},
+    {id:"m14", q:"Which movie has the best songs in my opinion?"},
+    {id:"m15", q:"Which movie fits not usually my thing but I love it?"},
+    {id:"m16", q:"Which movie is just so much fun?"},
+    {id:"m17", q:"What is the best movie to watch with friends?"},
+    {id:"m18", q:"What is the best old movie in my opinion?"},
+    {id:"m19", q:"What is my favorite long movie 3 or more hours?"},
+    {id:"m20", q:"Which movie do I think everyone should watch?"},
+    {id:"m21", q:"Who is my favorite movie villain?"},
+    {id:"m22", q:"Who is my favorite movie character of all time?"},
+    {id:"m23", q:"Who is my favorite comedic performance in a film?"},
+    {id:"m24", q:"What is my favorite animated movie?"},
+    {id:"m25", q:"Which film has my favorite ensemble cast?"},
+    {id:"m26", q:"Which film has my favorite opening scene?"},
+    {id:"m27", q:"Which film has my favorite plot twist?"},
+    {id:"m28", q:"Which film has my favorite single scene?"},
+    {id:"m29", q:"Which film has my favorite monologue?"},
+    {id:"m30", q:"What is my favorite horror movie?"},
+    {id:"m31", q:"What is my favorite sci-fi movie?"},
+    {id:"m32", q:"What is my favorite action movie?"},
+    {id:"m33", q:"What is my favorite comedy?"},
+    {id:"m34", q:"What is my favorite foreign language film?"},
+    {id:"m35", q:"What is my favorite documentary?"},
+    {id:"m36", q:"What is my favorite sports movie?"},
+    {id:"m37", q:"Which movie made me cry the most?"},
+    {id:"m38", q:"Which movie scared me the most?"},
+    {id:"m39", q:"Which movie made me laugh the hardest?"},
+    {id:"m40", q:"Which movie do I wish I could watch for the first time again?"},
+    {id:"m41", q:"What is my biggest guilty pleasure movie?"},
+    {id:"m42", q:"Which movie did I see too young?"},
+    {id:"m43", q:"Which film has my favorite production design?"},
+    {id:"m44", q:"Which film has my favorite costume design?"},
+    {id:"m45", q:"Which film has my favorite visual effects?"},
+    {id:"m46", q:"What is my favorite movie based on a true story?"},
+    {id:"m47", q:"What is my favorite sequel that is better than the original?"},
+    {id:"m48", q:"Which movie do I think has the worst ending?"},
+    {id:"m49", q:"Which film has my favorite final act?"},
+    {id:"m50", q:"Which movie do I think everyone should watch at least once?"},
+    {id:"m51", q:"Which movie would I never turn off if it came on TV?"},
+    {id:"m52", q:"Which movie has the best opening 10 minutes?"},
+    {id:"m53", q:"Which movie universe would I most want to live in?"},
+    {id:"m54", q:"Which actor do I think is underrated?"},
+    {id:"m55", q:"Which movie has the best fight scene?"},
+    {id:"m56", q:"Which movie do I think deserved more awards?"},
+    {id:"m57", q:"Which remake is better than the original in my opinion?"},
+    {id:"m58", q:"Which movie has the best friendship?"},
+    {id:"m59", q:"Which movie has the best soundtrack I still listen to?"},
+    {id:"m60", q:"Which movie character do I relate to most?"},
+  ],
+  tv: [
+    {id:"t01", q:"What is my favorite TV show of all time?"},
+    {id:"t02", q:"Who is my favorite TV showrunner?"},
+    {id:"t03", q:"What is my favorite TV drama?"},
+    {id:"t04", q:"What is my favorite TV comedy?"},
+    {id:"t05", q:"Who is my favorite TV villain?"},
+    {id:"t06", q:"Who is my favorite TV character of all time?"},
+    {id:"t07", q:"Which TV show do I think is overrated?"},
+    {id:"t08", q:"Which TV show do I think is underrated?"},
+    {id:"t09", q:"Which TV show do I think was cancelled too soon?"},
+    {id:"t10", q:"Which TV show do I think went on too long?"},
+    {id:"t11", q:"Which TV show has my favorite series finale?"},
+    {id:"t12", q:"Which TV show has my favorite pilot episode?"},
+    {id:"t13", q:"Which TV show has my favorite theme song?"},
+    {id:"t14", q:"Which TV show do I consider criminally overlooked?"},
+    {id:"t15", q:"What is my favorite limited series or miniseries?"},
+    {id:"t16", q:"Which TV show is just so much fun?"},
+    {id:"t17", q:"Which TV show fits not usually my thing but I love it?"},
+    {id:"t18", q:"What is the best old TV show in my opinion?"},
+    {id:"t19", q:"Which TV show do I think everyone should watch?"},
+    {id:"t20", q:"Which TV show do I most want to rewatch from the beginning?"},
+    {id:"t21", q:"Which TV show has the best season finale?"},
+    {id:"t22", q:"Which TV character do I relate to most?"},
+    {id:"t23", q:"Which TV show has the best ensemble cast?"},
+    {id:"t24", q:"Which TV show has the best opening credits sequence?"},
+    {id:"t25", q:"Which TV show made me cry the most?"},
+    {id:"t26", q:"Which TV show has the most rewatchable episodes?"},
+    {id:"t27", q:"Which TV show has the best villain arc?"},
+    {id:"t28", q:"Which TV show do I think had the best writing?"},
+    {id:"t29", q:"Which TV show has the best friendship?"},
+    {id:"t30", q:"Which TV show has the best romance?"},
+    {id:"t31", q:"Which TV show scared me the most?"},
+    {id:"t32", q:"Which TV show made me laugh the hardest?"},
+    {id:"t33", q:"Which TV show has the best world-building?"},
+    {id:"t34", q:"Which TV show do I wish had a spin-off?"},
+    {id:"t35", q:"Which TV show has the best episode ever made?"},
+    {id:"t36", q:"Which animated TV show is my favorite?"},
+    {id:"t37", q:"Which TV show has the best costume design?"},
+    {id:"t38", q:"Which TV show has the most satisfying character arc?"},
+    {id:"t39", q:"Which TV show do I think everyone should binge first?"},
+    {id:"t40", q:"Which TV show has the best cold open?"},
+    {id:"t41", q:"Which TV character do I think is most underrated?"},
+    {id:"t42", q:"Which TV show has the best season 1?"},
+    {id:"t43", q:"Which TV show got significantly better after season 1?"},
+    {id:"t44", q:"Which TV documentary or docuseries is my favorite?"},
+    {id:"t45", q:"Which TV show has the most iconic catchphrase?"},
+    {id:"t46", q:"Which TV show has the most shocking plot twist?"},
+    {id:"t47", q:"Which TV show has the best sibling relationship?"},
+    {id:"t48", q:"Which TV show has the best mentor and student dynamic?"},
+    {id:"t49", q:"Which TV show do I think has the most consistent quality?"},
+    {id:"t50", q:"Which TV show has the best international non-English series?"},
+    {id:"t51", q:"Which TV show do I think is the most underrated drama?"},
+    {id:"t52", q:"Which TV show has the best newsroom or workplace setting?"},
+    {id:"t53", q:"Which TV show has the best sports storyline?"},
+    {id:"t54", q:"Which TV show do I think has the best narration?"},
+    {id:"t55", q:"Which TV show made me stay up all night watching?"},
+    {id:"t56", q:"Which TV show changed how I think about something?"},
+    {id:"t57", q:"Which TV show has the best anti-hero?"},
+    {id:"t58", q:"Which TV show has the best redemption arc?"},
+    {id:"t59", q:"Which TV show has the best final season?"},
+    {id:"t60", q:"Which TV show do I quote most in real life?"},
+  ],
+  games: [
+    {id:"g01", q:"What is my favorite video game of all time?"},
+    {id:"g02", q:"Which game has my favorite story?"},
+    {id:"g03", q:"Which game has my favorite art style?"},
+    {id:"g04", q:"Which game has had the biggest personal impact on me?"},
+    {id:"g05", q:"Which game has the best combat in my opinion?"},
+    {id:"g06", q:"Which game do I think is overhated?"},
+    {id:"g07", q:"Which game do I think is underrated?"},
+    {id:"g08", q:"Which game do I think is overrated?"},
+    {id:"g09", q:"Which game do I think needs a remake?"},
+    {id:"g10", q:"Which game do I consider criminally overlooked?"},
+    {id:"g11", q:"Which game has my favorite protagonist?"},
+    {id:"g12", q:"Which game has my favorite antagonist or villain?"},
+    {id:"g13", q:"Which game has my favorite soundtrack?"},
+    {id:"g14", q:"What is my favorite multiplayer game?"},
+    {id:"g15", q:"Which game fits not usually my thing but I love it?"},
+    {id:"g16", q:"Which game do I play to turn my brain off?"},
+    {id:"g17", q:"What is the best game to play with friends?"},
+    {id:"g18", q:"What is my favorite retro game?"},
+    {id:"g19", q:"What is my most nostalgic childhood game?"},
+    {id:"g20", q:"Which game do I think everyone should play?"},
+    {id:"g21", q:"Which game has the best ending?"},
+    {id:"g22", q:"Which game has the best open world?"},
+    {id:"g23", q:"Which game has the best side quests?"},
+    {id:"g24", q:"Which game has the best character customization?"},
+    {id:"g25", q:"Which game do I think has the best DLC?"},
+    {id:"g26", q:"Which game has the most emotional moment?"},
+    {id:"g27", q:"Which game has the best tutorial?"},
+    {id:"g28", q:"Which game has the best map or level design?"},
+    {id:"g29", q:"Which game has the best co-op experience?"},
+    {id:"g30", q:"Which game has the best single-player campaign?"},
+    {id:"g31", q:"Which game has the best lore or world-building?"},
+    {id:"g32", q:"Which game has the most satisfying progression system?"},
+    {id:"g33", q:"Which game do I think aged the best?"},
+    {id:"g34", q:"Which game has the best stealth mechanics?"},
+    {id:"g35", q:"Which game do I think has the most replayability?"},
+    {id:"g36", q:"Which game has the best boss fights?"},
+    {id:"g37", q:"Which game has the best dialogue?"},
+    {id:"g38", q:"Which game has the best relationship or companion system?"},
+    {id:"g39", q:"Which game series do I think peaked with its first entry?"},
+    {id:"g40", q:"Which game has the best atmosphere?"},
+    {id:"g41", q:"Which game has the best graphics for its time?"},
+    {id:"g42", q:"Which game do I think has the most satisfying ending?"},
+    {id:"g43", q:"Which game has the best Easter eggs?"},
+    {id:"g44", q:"Which game has the best competitive scene?"},
+    {id:"g45", q:"Which game has the best character design?"},
+    {id:"g46", q:"Which game do I think had the most cultural impact?"},
+    {id:"g47", q:"Which game has the best magic or power system?"},
+    {id:"g48", q:"Which game do I think is the best licensed game?"},
+    {id:"g49", q:"Which game made me feel the most accomplished?"},
+    {id:"g50", q:"Which game has the best voice acting?"},
+    {id:"g51", q:"Which game has the best morality system?"},
+    {id:"g52", q:"Which game has the best post-apocalyptic setting?"},
+    {id:"g53", q:"Which game has the best detective or mystery mechanics?"},
+    {id:"g54", q:"Which game series do I think needs a break?"},
+    {id:"g55", q:"Which game has the best rhythm mechanics?"},
+    {id:"g56", q:"Which game do I think is perfect from start to finish?"},
+    {id:"g57", q:"Which game has the best speedrunning community?"},
+    {id:"g58", q:"Which game has the best underwater or space level?"},
+    {id:"g59", q:"Which game has the best loading screen tips or mini-games?"},
+    {id:"g60", q:"Which game do I think had the most cultural impact on gaming?"},
+  ],
+  music: [
+    {id:"mu01", q:"What is my favorite album of all time?"},
+    {id:"mu02", q:"Who is my favorite artist or band?"},
+    {id:"mu03", q:"What is my favorite song of all time?"},
+    {id:"mu04", q:"Which album has my favorite opening track?"},
+    {id:"mu05", q:"Which album has my favorite closing track?"},
+    {id:"mu06", q:"Which album has the best cover art in my opinion?"},
+    {id:"mu07", q:"Which artist do I think is overrated?"},
+    {id:"mu08", q:"Which artist do I think is underrated?"},
+    {id:"mu09", q:"Which album do I consider criminally overlooked?"},
+    {id:"mu10", q:"Which artist do I think everyone should listen to?"},
+    {id:"mu11", q:"What is my favorite live album or concert recording?"},
+    {id:"mu12", q:"Which album do I think has no skips?"},
+    {id:"mu13", q:"What is my favorite debut album?"},
+    {id:"mu14", q:"Which artist has my favorite discography overall?"},
+    {id:"mu15", q:"What is my favorite guilty pleasure song or artist?"},
+    {id:"mu16", q:"Which album fits not usually my thing but I love it?"},
+    {id:"mu17", q:"What is my most nostalgic album or song?"},
+    {id:"mu18", q:"Which artist do I wish I could see live?"},
+    {id:"mu19", q:"What is my favorite song to play loud in the car?"},
+    {id:"mu20", q:"Which album do I think everyone should hear at least once?"},
+    {id:"mu21", q:"What is my favorite genre of music to listen to in the gym?"},
+    {id:"mu22", q:"What is my most hated music genre?"},
+    {id:"mu23", q:"Which song has had the biggest impact on my life?"},
+    {id:"mu24", q:"What is my favorite childhood artist?"},
+    {id:"mu25", q:"Which album do I think has the best track listing order?"},
+    {id:"mu26", q:"Which artist do I think gives the best interviews?"},
+    {id:"mu27", q:"Which music video is my favorite?"},
+    {id:"mu28", q:"Which artist has the best stage presence?"},
+    {id:"mu29", q:"Which album changed how I listen to music?"},
+    {id:"mu30", q:"Which artist do I think writes the best lyrics?"},
+    {id:"mu31", q:"Which song do I think is perfectly produced?"},
+    {id:"mu32", q:"Which album do I think is the most sonically unique?"},
+    {id:"mu33", q:"Which artist do I think has the best collaborations?"},
+    {id:"mu34", q:"Which song has the best bridge?"},
+    {id:"mu35", q:"Which artist do I think is the best storyteller?"},
+    {id:"mu36", q:"Which song do I think should have been longer?"},
+    {id:"mu37", q:"Which artist do I think has evolved the most?"},
+    {id:"mu38", q:"Which song do I skip every time but secretly like?"},
+    {id:"mu39", q:"Which album is my go-to for a road trip?"},
+    {id:"mu40", q:"Which artist has the most distinctive voice?"},
+    {id:"mu41", q:"Which song has the best opening line?"},
+    {id:"mu42", q:"Which album do I listen to from start to finish most?"},
+    {id:"mu43", q:"Which artist do I think deserves a biopic?"},
+    {id:"mu44", q:"Which song makes me want to dance no matter what?"},
+    {id:"mu45", q:"Which album do I think is underappreciated in an artist's catalog?"},
+    {id:"mu46", q:"Which artist do I think has the best B-sides?"},
+    {id:"mu47", q:"Which song has the most memorable guitar riff?"},
+    {id:"mu48", q:"Which album would I play at a dinner party?"},
+    {id:"mu49", q:"Which album do I think will be remembered as a classic 50 years from now?"},
+    {id:"mu50", q:"Which artist do I think should collaborate but never has?"},
+    {id:"mu51", q:"Which song has the best rap verse?"},
+    {id:"mu52", q:"Which album would I use to introduce someone to my music taste?"},
+    {id:"mu53", q:"Which song has the most unexpected genre blend?"},
+    {id:"mu54", q:"Which artist do I think is the best live performer?"},
+    {id:"mu55", q:"Which artist do I think has the best relationship with their fans?"},
+    {id:"mu56", q:"Which song has the best use of silence?"},
+    {id:"mu57", q:"Which song do I think has the best music video concept?"},
+    {id:"mu58", q:"Which artist do I think peaked too early?"},
+    {id:"mu59", q:"Which song has the best instrumental break?"},
+    {id:"mu60", q:"Which album do I think is a perfect debut?"},
+  ]
+};
+
+const QUESTIONS_PER_QUIZ = 20;
+
+function getPoolKey(type) {
+  return `cq-used-${type}`;
 }
 
+function getNextQuestions(type) {
+  const pool = QUESTION_POOLS[type] ?? QUESTION_POOLS.movies;
+  const usedRaw = localStorage.getItem(getPoolKey(type));
+  let used = [];
+  try { used = usedRaw ? JSON.parse(usedRaw) : []; } catch(e) { used = []; }
+
+  // Filter out already-used questions
+  let available = pool.filter(q => !used.includes(q.id));
+
+  // If not enough available, reset and start fresh
+  if (available.length < QUESTIONS_PER_QUIZ) {
+    used = [];
+    available = [...pool];
+    localStorage.removeItem(getPoolKey(type));
+  }
+
+  // Shuffle and pick 20
+  const shuffled = [...available].sort(() => Math.random() - 0.5);
+  const picked = shuffled.slice(0, QUESTIONS_PER_QUIZ);
+
+  // Save used IDs
+  const newUsed = [...used, ...picked.map(q => q.id)];
+  localStorage.setItem(getPoolKey(type), JSON.stringify(newUsed));
+
+  return picked;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   CREATOR FORM
+═══════════════════════════════════════════════════════════ */
 function renderCreatorForm() {
-  // Sync type buttons
-  ['Movies','TV','Games'].forEach(t => {
-    const id = 'ctype' + t;
-    const btn = document.getElementById(id);
-    if (btn) btn.className = (t.toLowerCase() === quizType || (t === 'TV' && quizType === 'tv')) ? 'primary' : '';
-  });
-  // Fix ctype button logic
   document.getElementById('ctypeMovies').className = quizType === 'movies' ? 'primary' : '';
   document.getElementById('ctypeTV').className     = quizType === 'tv'     ? 'primary' : '';
   document.getElementById('ctypeGames').className  = quizType === 'games'  ? 'primary' : '';
+  document.getElementById('ctypeMusic').className  = quizType === 'music'  ? 'primary' : '';
 
-  const questions = getCreatorQuestions();
+  const questions = getNextQuestions(quizType);
   const form = document.getElementById('creatorForm');
+
+  // Store current question IDs for buildFromCreator to reference
+  form.dataset.questionIds = JSON.stringify(questions.map(q => q.id));
+
   form.innerHTML = questions.map((q, i) => `
     <div class="creator-row">
-      <div class="creator-question">${q}</div>
+      <div class="creator-question">${q.q}</div>
       <input class="creator-input" placeholder="Your answer…" id="ca_${i}" autocomplete="off">
       <input class="creator-input" placeholder="e.g. Show or film name" id="ch_${i}" autocomplete="off">
     </div>
   `).join('');
+
+  // Show how many quizzes remain before reset
+  const pool = QUESTION_POOLS[quizType];
+  const usedRaw = localStorage.getItem(getPoolKey(quizType));
+  let used = [];
+  try { used = usedRaw ? JSON.parse(usedRaw) : []; } catch(e) {}
+  const remaining = Math.floor((pool.length - used.length) / QUESTIONS_PER_QUIZ);
+  const existingBadge = document.getElementById('questionPoolBadge');
+  if (existingBadge) existingBadge.remove();
+  const badge = document.createElement('div');
+  badge.id = 'questionPoolBadge';
+  badge.style.cssText = 'font-size:11px;color:var(--muted);text-align:right;margin-bottom:8px;';
+  badge.textContent = remaining > 0
+    ? `${remaining} fresh set${remaining > 1 ? 's' : ''} of questions remaining before topics repeat`
+    : `All question sets used — topics will reset after this quiz`;
+  form.before(badge);
 }
 
 /* ═══════════════════════════════════════════════════════════
    BUILD FROM CREATOR
 ═══════════════════════════════════════════════════════════ */
 window.buildFromCreator = async function() {
-  const questions = getCreatorQuestions();
+  const form = document.getElementById('creatorForm');
+  const questionIds = JSON.parse(form.dataset.questionIds || '[]');
+  const pool = QUESTION_POOLS[quizType] ?? QUESTION_POOLS.movies;
   const base = [];
 
-  questions.forEach((q, i) => {
+  questionIds.forEach((id, i) => {
+    const qObj = pool.find(q => q.id === id);
+    if (!qObj) return;
     const answer = document.getElementById(`ca_${i}`)?.value.trim();
     const hint   = document.getElementById(`ch_${i}`)?.value.trim();
-    if (!answer) return; // skip blank questions
+    if (!answer) return;
 
     base.push({
-      id: `q${i}_${Math.random().toString(36).slice(2,6)}`,
-      question: q,
+      id: `${id}_${Math.random().toString(36).slice(2,6)}`,
+      question: qObj.q,
       options: [{
-        id: `q${i}_o0_${Math.random().toString(36).slice(2,6)}`,
+        id: `${id}_o0_${Math.random().toString(36).slice(2,6)}`,
         text: answer,
         correct: true,
         searchHint: hint || null
@@ -2322,7 +2545,30 @@ window.downloadTemplate = function() {
     "Option 4 Text","Option 4 Correct","Option 4 Points","Option 4 Search Hint"
   ];
 
-  const MOVIE_QUESTIONS = [
+  const pool = QUESTION_POOLS[quizType] ?? QUESTION_POOLS.movies;
+  const filename = `cinequiz_template_${quizType}.csv`;
+  const enc = v => /[,"\n]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v;
+
+  const rows = pool.map(({id, q}) => [
+    q, "Single Choice (Radio Button)", "Question points",
+    "1", "1", "TRUE", "", id, "TRUE",
+    "", "", "", "",
+    "", "", "", "",
+    "", "", "", "",
+    "", "", "", ""
+  ].map(enc).join(","));
+
+  const csv = [headers.map(enc).join(","), ...rows].join("\n");
+  const blob = new Blob([csv], { type: "text/csv" });
+  const url  = URL.createObjectURL(blob);
+  const a    = Object.assign(document.createElement("a"), { href: url, download: filename });
+  a.click();
+  URL.revokeObjectURL(url);
+};
+
+</script>
+</body>
+</html>
     ["What is my favorite movie?",                                    "Favorite Movie"],
     ["Who is my favorite director?",                                  "Favorite Director"],
     ["Which is my favorite screenplay?",                              "Favorite Screenplay"],
