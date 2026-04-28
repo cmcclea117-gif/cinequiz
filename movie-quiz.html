@@ -1237,8 +1237,8 @@ function loadQuizFromCache(quizUrl) {
 }
 const GIST_URL       = `${WORKER_URL}/gist`;
 const LASTFM_BASE    = `${WORKER_URL}/lastfm`;
-const BGG_BASE       = `${WORKER_URL}/bgg`;
-const HARDCOVER_URL  = `${WORKER_URL}/hardcover`;
+const BGG_BASE          = `${WORKER_URL}/bgg`;
+const OPENLIBRARY_URL   = `${WORKER_URL}/openlibrary`;
 
 // Helper: fetch through worker with auth header
 function wfetch(url, options = {}) {
@@ -2250,11 +2250,7 @@ async function enrichOption(opt) {
 
     if (quizType === 'books') {
       try {
-        const res = await wfetch(`${WORKER_URL}/hardcover`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ query })
-        }).then(r => r.json());
+        const res = await wfetch(`${OPENLIBRARY_URL}?query=${encodeURIComponent(query)}`).then(r => r.json());
         const book = res.result;
         return {
           ...opt,
