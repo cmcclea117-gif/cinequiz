@@ -676,6 +676,143 @@
 
   .toast.show { transform: translateX(-50%) translateY(0); }
 
+  /* ── RESULTS PAGE ── */
+  #resultsPage {
+    display: none;
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 40px 20px 80px;
+    position: relative;
+    z-index: 1;
+  }
+  #resultsPage.visible { display: block; }
+
+  .results-hero {
+    text-align: center;
+    margin-bottom: 40px;
+  }
+  .results-eyebrow {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 10px;
+  }
+  .results-title {
+    font-family: var(--font-display);
+    font-size: clamp(1.6rem, 5vw, 2.8rem);
+    font-style: italic;
+    color: var(--cream);
+    margin-bottom: 24px;
+  }
+  .results-title span { color: var(--gold); }
+  .results-score-wrap {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+  .results-score-num {
+    font-family: var(--font-display);
+    font-size: 5rem;
+    color: var(--gold);
+    line-height: 1;
+  }
+  .results-score-total {
+    font-size: 1.6rem;
+    color: var(--muted);
+  }
+  .results-pct {
+    font-size: 16px;
+    color: var(--muted);
+    margin-bottom: 28px;
+  }
+  .results-cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 24px;
+    background: var(--gold);
+    color: #0d0d0f;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: background 0.15s;
+    border: none;
+    cursor: pointer;
+  }
+  .results-cta:hover { background: #d4b05e; }
+
+  .results-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 32px;
+  }
+  .results-row {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px 16px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    transition: border-color 0.2s;
+  }
+  .results-row.right { border-color: var(--correct-border); background: var(--correct); }
+  .results-row.wrong { border-color: var(--incorrect-border); background: var(--incorrect); }
+
+  .results-row-icon {
+    font-size: 18px;
+    flex-shrink: 0;
+    width: 24px;
+    text-align: center;
+  }
+  .results-row-img {
+    width: 44px; height: 44px;
+    border-radius: 5px;
+    object-fit: cover;
+    flex-shrink: 0;
+    border: 1px solid var(--border);
+    background: var(--border);
+  }
+  .results-row-img-placeholder {
+    width: 44px; height: 44px;
+    border-radius: 5px;
+    background: var(--border);
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    color: var(--muted);
+  }
+  .results-row-info { flex: 1; min-width: 0; }
+  .results-row-question {
+    font-size: 11px;
+    color: var(--muted);
+    font-weight: 500;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    margin-bottom: 3px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .results-row-answer {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--cream);
+  }
+  .results-row-correct {
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 2px;
+    font-style: italic;
+  }
+
   /* ── ACCESS GATE ── */
   .access-gate {
     display: none;
@@ -975,15 +1112,27 @@
     </div>
 
     <div class="action-row" id="postSubmitActions" style="display:none;margin-bottom:16px;">
-      <button class="primary" onclick="downloadResultsCard()" id="resultsCardBtn">
+      <button class="primary" onclick="shareResults()" id="shareResultsBtn">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="3" r="1.5"/><circle cx="4" cy="8" r="1.5"/><circle cx="12" cy="13" r="1.5"/><path d="M5.5 9l5 3M10.5 4.5l-5 3"/></svg>
+        Share Results
+      </button>
+      <button onclick="downloadResultsCard()" id="resultsCardBtn">
         <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="2" y="2" width="12" height="12" rx="2"/><path d="M2 6h12"/></svg>
-        Download Results Card
+        Download Card
       </button>
       <button onclick="exportResults()" id="exportResultsBtn">
         <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M2 11v2a1 1 0 001 1h10a1 1 0 001-1v-2M8 10V2M5 5l3-3 3 3"/></svg>
         Export CSV
       </button>
       <button onclick="confirmRetake()">↩ Retake Quiz</button>
+    </div>
+    <!-- Results share link output -->
+    <div id="resultsLinkOutput" style="display:none;margin-bottom:16px;">
+      <div style="font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:var(--gold-dim);font-weight:600;margin-bottom:6px;">Results Link</div>
+      <div style="display:flex;gap:8px;">
+        <input type="text" id="resultsShareLink" readonly style="flex:1;padding:9px 13px;background:var(--bg);border:1px solid var(--gold-dim);border-radius:6px;color:var(--gold);font-family:var(--font-body);font-size:13px;">
+        <button onclick="copyResultsLink()">Copy</button>
+      </div>
     </div>
 
     <form id="quizForm" onsubmit="return false;"></form>
@@ -1002,6 +1151,24 @@
     &nbsp;·&nbsp; <a href="https://resend.com/" target="_blank" rel="noopener" style="color:var(--gold-dim); text-decoration:none;">Resend</a>
   </div>
 
+</div><!-- end .container -->
+
+<!-- RESULTS PAGE — shown when ?results= URL param is present -->
+<div id="resultsPage">
+  <div class="results-hero">
+    <div class="results-eyebrow">★ Know Your Friend ★</div>
+    <div class="results-title" id="resultsTitleText">How well do you know <span>—</span>?</div>
+    <div class="results-score-wrap">
+      <div class="results-score-num" id="resultsScoreNum">0</div>
+      <div class="results-score-total" id="resultsScoreTotal">/ 0</div>
+    </div>
+    <div class="results-pct" id="resultsPct">0%</div>
+    <a id="resultsTakeQuizBtn" href="#" class="results-cta">🎬 Take This Quiz</a>
+  </div>
+  <div class="results-grid" id="resultsGrid"></div>
+  <div style="text-align:center;margin-top:32px;font-size:12px;color:var(--muted);">
+    cinequiz.quest
+  </div>
 </div>
 
 <!-- TOAST -->
@@ -1862,14 +2029,17 @@ function setQuizType(type) {
 ═══════════════════════════════════════════════════════════ */
 window.addEventListener("DOMContentLoaded", () => {
   renderCreatorForm();
-  checkAccess().then(() => {
-    const params  = new URLSearchParams(window.location.search);
-    const quizURL = params.get("quiz");
-    if (quizURL) {
-      switchMode('import');
-      document.getElementById("jsonUrlInput").value = quizURL;
-      loadFromURL();
-    }
+  checkForResultsPage().then(isResults => {
+    if (isResults) return; // results page handles everything
+    checkAccess().then(() => {
+      const params  = new URLSearchParams(window.location.search);
+      const quizURL = params.get("quiz");
+      if (quizURL) {
+        switchMode('import');
+        document.getElementById("jsonUrlInput").value = quizURL;
+        loadFromURL();
+      }
+    });
   });
 });
 
@@ -2364,6 +2534,7 @@ function renderQuiz() {
 
   document.getElementById("scoreBanner").style.display = "none";
   document.getElementById("postSubmitActions").style.display = "none";
+  document.getElementById("resultsLinkOutput").style.display = "none";
   document.getElementById("submitBtn").disabled = false;
   document.getElementById("submitBtn").style.display = "";
 
@@ -2563,8 +2734,160 @@ window.publishToGist = async function() {
 };
 
 /* ═══════════════════════════════════════════════════════════
-   DOWNLOAD RESULTS CARD
+   SHARE RESULTS
 ═══════════════════════════════════════════════════════════ */
+window.shareResults = async function() {
+  const btn = document.getElementById("shareResultsBtn");
+  btn.disabled = true;
+  btn.textContent = "Publishing…";
+
+  try {
+    // Build results payload
+    const score = userAnswers.filter((id, i) => quizData[i]?.options.find(o => o.id === id)?.correct).length;
+    const total = quizData.length;
+
+    // Get quiz URL from the share link input if available
+    const quizUrl = document.getElementById("jsonUrlInput")?.value?.trim() || null;
+
+    const answers = quizData.map((q, i) => {
+      const chosen  = q.options.find(o => o.id === userAnswers[i]);
+      const correct = q.options.find(o => o.correct);
+      return {
+        question:     q.question,
+        correct:      correct?.text ?? "",
+        chosen:       chosen?.text ?? "No answer",
+        correctImage: correct?.image ?? null,
+        chosenImage:  chosen?.image ?? null,
+        isRight:      chosen?.correct === true
+      };
+    });
+
+    const payload = {
+      type: "results",
+      creatorName: quizData.creatorName ?? null,
+      quizType,
+      quizUrl,
+      score,
+      total,
+      pct: Math.round((score / total) * 100),
+      takenAt: Date.now(),
+      answers
+    };
+
+    // Publish to Gist
+    const res = await wfetch(GIST_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "Accept": "application/vnd.github+json" },
+      body: JSON.stringify({
+        description: `CineQuiz Results${quizData.creatorName ? ` — How well do you know ${quizData.creatorName}?` : ""}`,
+        public: true,
+        files: { "results.json": { content: JSON.stringify(payload, null, 2) } }
+      })
+    });
+
+    if (!res.ok) throw new Error(`Gist failed: ${res.status}`);
+    const gist = await res.json();
+    const rawUrl = gist.files["results.json"].raw_url;
+
+    // Generate share link
+    const base = window.location.href.split("?")[0];
+    const shareLink = `${base}?results=${encodeURIComponent(rawUrl)}`;
+
+    document.getElementById("resultsShareLink").value = shareLink;
+    document.getElementById("resultsLinkOutput").style.display = "block";
+    toast("Results link ready!");
+
+    btn.textContent = "✓ Shared!";
+  } catch(e) {
+    toast(`Share failed: ${e.message}`);
+    btn.disabled = false;
+    btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="3" r="1.5"/><circle cx="4" cy="8" r="1.5"/><circle cx="12" cy="13" r="1.5"/><path d="M5.5 9l5 3M10.5 4.5l-5 3"/></svg> Share Results`;
+  }
+};
+
+window.copyResultsLink = function() {
+  const val = document.getElementById("resultsShareLink").value;
+  navigator.clipboard.writeText(val).then(() => toast("Results link copied!")).catch(() => {
+    document.getElementById("resultsShareLink").select();
+    document.execCommand("copy");
+    toast("Copied!");
+  });
+};
+
+/* ═══════════════════════════════════════════════════════════
+   RESULTS PAGE RENDERER  (?results= URL param)
+═══════════════════════════════════════════════════════════ */
+async function checkForResultsPage() {
+  const params = new URLSearchParams(window.location.search);
+  const resultsUrl = params.get("results");
+  if (!resultsUrl) return false;
+
+  // Hide everything except results page
+  document.getElementById("accessGate").style.display = "none";
+  document.getElementById("modeToggle").style.display = "none";
+  document.getElementById("creatorSection").style.display = "none";
+  document.getElementById("importSection").style.display = "none";
+  document.querySelector(".card")?.style && (document.querySelectorAll(".card").forEach(c => c.style.display = "none"));
+  document.querySelector(".header").style.display = "none";
+
+  const page = document.getElementById("resultsPage");
+  page.classList.add("visible");
+
+  try {
+    const res = await fetch(resultsUrl);
+    if (!res.ok) throw new Error("Could not load results");
+    const data = await res.json();
+
+    if (data.type !== "results") throw new Error("Not a results file");
+
+    // Populate hero
+    const name = data.creatorName;
+    document.getElementById("resultsTitleText").innerHTML = name
+      ? `How well do you know <span>${name}</span>?`
+      : `Quiz Results`;
+    document.getElementById("resultsScoreNum").textContent  = data.score;
+    document.getElementById("resultsScoreTotal").textContent = `/ ${data.total}`;
+    document.getElementById("resultsPct").textContent = `${data.pct}%`;
+
+    // Take quiz button
+    if (data.quizUrl) {
+      const base = window.location.href.split("?")[0];
+      document.getElementById("resultsTakeQuizBtn").href = `${base}?quiz=${encodeURIComponent(data.quizUrl)}`;
+    } else {
+      document.getElementById("resultsTakeQuizBtn").style.display = "none";
+    }
+
+    // Build answer rows
+    const grid = document.getElementById("resultsGrid");
+    const typeEmoji = { movies:"🎬", tv:"📺", games:"🎮", music:"🎵", books:"📚", boardgames:"🎲" };
+    const emoji = typeEmoji[data.quizType] ?? "🎬";
+
+    grid.innerHTML = data.answers.map(a => {
+      const imgSrc = a.isRight ? a.correctImage : a.chosenImage;
+      const imgEl = imgSrc
+        ? `<img class="results-row-img" src="${imgSrc}" alt="" onerror="this.style.display='none'">`
+        : `<div class="results-row-img-placeholder">${emoji}</div>`;
+      const wrongLine = !a.isRight && a.correct
+        ? `<div class="results-row-correct">✓ ${a.correct}</div>`
+        : "";
+      return `
+        <div class="results-row ${a.isRight ? 'right' : 'wrong'}">
+          <div class="results-row-icon">${a.isRight ? "✓" : "✕"}</div>
+          ${imgEl}
+          <div class="results-row-info">
+            <div class="results-row-question">${a.question}</div>
+            <div class="results-row-answer">${a.chosen || "No answer"}</div>
+            ${wrongLine}
+          </div>
+        </div>`;
+    }).join("");
+
+  } catch(e) {
+    page.innerHTML = `<div style="text-align:center;padding:60px;color:var(--muted);">Could not load results: ${e.message}</div>`;
+  }
+
+  return true;
+}
 window.downloadResultsCard = async function() {
   const score      = userAnswers.filter((id, i) => quizData[i]?.options.find(o => o.id === id)?.correct).length;
   const total      = quizData.length;
@@ -2761,159 +3084,6 @@ window.downloadTemplate = function() {
   ].map(enc).join(","));
 
   const csv = [headers.map(enc).join(","), ...rows].join("\n");
-  const blob = new Blob([csv], { type: "text/csv" });
-  const url  = URL.createObjectURL(blob);
-  const a    = Object.assign(document.createElement("a"), { href: url, download: filename });
-  a.click();
-  URL.revokeObjectURL(url);
-};
-
-</script>
-</body>
-</html>
-    ["What is my favorite movie?",                                    "Favorite Movie"],
-    ["Who is my favorite director?",                                  "Favorite Director"],
-    ["Which is my favorite screenplay?",                              "Favorite Screenplay"],
-    ["Which film has my favorite cinematography?",                    "Favorite Cinematography"],
-    ["Which film has my favorite ending?",                            "Favorite Ending"],
-    ["Which movie do I think is overhated?",                          "Overhated Movie"],
-    ["Which movie do I think is underrated?",                         "Underrated Movie"],
-    ["Which movie do I think is overrated?",                          "Overrated Movie"],
-    ["Which movie do I think needs a sequel?",                        "A Movie That Needs a Sequel"],
-    ["Which movie do I consider criminally overlooked?",              "Criminally Overlooked Movie"],
-    ["Who is my favorite actor (specific performance)?",              "Favorite Actor"],
-    ["Who is my favorite actress (specific performance)?",            "Favorite Actress"],
-    ["Which film has the best score in my opinion?",                  "Best Movie Score"],
-    ["Which movie has the best songs in my opinion?",                 "Best Movie Song(s)"],
-    ["Which movie fits not usually my thing but I love it?",          "Not Usually My Thing But I Love It"],
-    ["Which movie is just so much fun?",                              "A Movie That Is Just So Much Fun"],
-    ["Whats the best movie to watch with friends?",                   "Best Movie to Watch With Friends"],
-    ["What is the best old movie in my opinion?",                     "Best Old Movie"],
-    ["What is my favorite long movie 3 or more hours?",               "Best Long Movie 3 Plus Hours"],
-    ["Which movie do I think everyone should watch?",                 "A Movie Everyone Should Watch"],
-    ["Who is my favorite movie villain?",                             "Favorite Movie Villain"],
-    ["Who is my favorite movie character of all time?",               "Favorite Movie Character"],
-    ["Who is my favorite comedic performance in a film?",             "Favorite Comedic Performance"],
-    ["What is my favorite animated movie?",                           "Favorite Animated Movie"],
-    ["Which film has my favorite ensemble cast?",                     "Favorite Ensemble Cast"],
-    ["Which film has my favorite opening scene?",                     "Favorite Opening Scene"],
-    ["Which film has my favorite plot twist?",                        "Favorite Plot Twist"],
-    ["Which film has my favorite single scene?",                      "Favorite Single Scene"],
-    ["Which film has my favorite monologue?",                         "Favorite Movie Monologue"],
-    ["What is my favorite horror movie?",                             "Favorite Horror Movie"],
-    ["What is my favorite sci-fi movie?",                             "Favorite Sci-Fi Movie"],
-    ["What is my favorite action movie?",                             "Favorite Action Movie"],
-    ["What is my favorite comedy?",                                   "Favorite Comedy"],
-    ["What is my favorite foreign language film?",                    "Favorite Foreign Language Film"],
-    ["What is my favorite documentary?",                              "Favorite Documentary"],
-    ["What is my favorite sports movie?",                             "Favorite Sports Movie"],
-    ["Which movie made me cry the most?",                             "Movie That Made Me Cry"],
-    ["Which movie scared me the most?",                               "Scariest Movie"],
-    ["Which movie made me laugh the hardest?",                        "Funniest Movie"],
-    ["Which movie do I wish I could watch for the first time again?", "Movie I Wish I Could Rewatch Fresh"],
-    ["What is my biggest guilty pleasure movie?",                     "Guilty Pleasure Movie"],
-    ["Which movie did I see too young?",                              "Movie I Saw Too Young"],
-    ["Which film has my favorite production design?",                 "Favorite Production Design"],
-    ["Which film has my favorite costume design?",                    "Favorite Costume Design"],
-    ["Which film has my favorite visual effects?",                    "Favorite Visual Effects"],
-    ["What is my favorite movie based on a true story?",              "Favorite True Story Movie"],
-    ["What is my favorite sequel that is better than the original?",  "Best Sequel Better Than Original"],
-    ["Which movie do I think has the worst ending?",                  "Movie With Worst Ending"],
-    ["Which film has my favorite final act?",                         "Favorite Final Act"],
-    ["Which movie do I think everyone should watch at least once?",   "Must Watch Once"],
-    ["Which movie would I never turn off if it came on TV?",          "Never Turn It Off"],
-  ];
-
-  const TV_QUESTIONS = [
-    ["What is my favorite TV show of all time?",                      "Favorite TV Show"],
-    ["Who is my favorite TV showrunner?",                             "Favorite Showrunner"],
-    ["What is my favorite TV drama?",                                 "Favorite TV Drama"],
-    ["What is my favorite TV comedy?",                                "Favorite TV Comedy"],
-    ["Who is my favorite TV villain?",                                "Favorite TV Villain"],
-    ["Who is my favorite TV character of all time?",                  "Favorite TV Character"],
-    ["Which TV show do I think is overrated?",                        "Overrated TV Show"],
-    ["Which TV show do I think is underrated?",                       "Underrated TV Show"],
-    ["Which TV show do I think was cancelled too soon?",              "Cancelled Too Soon"],
-    ["Which TV show do I think went on too long?",                    "Went On Too Long"],
-    ["Which TV show has my favorite series finale?",                  "Favorite Series Finale"],
-    ["Which TV show has my favorite pilot episode?",                  "Favorite Pilot Episode"],
-    ["Which TV show has my favorite theme song?",                     "Favorite Theme Song"],
-    ["Which TV show do I consider criminally overlooked?",            "Criminally Overlooked Show"],
-    ["What is my favorite limited series or miniseries?",             "Favorite Limited Series"],
-    ["Which TV show is just so much fun?",                            "Just So Much Fun"],
-    ["Which TV show fits not usually my thing but I love it?",        "Not Usually My Thing"],
-    ["What is the best old TV show in my opinion?",                   "Best Old TV Show"],
-    ["Which TV show do I think everyone should watch?",               "Everyone Should Watch"],
-    ["Which TV show do I most want to rewatch from the beginning?",   "Most Want to Rewatch"],
-  ];
-
-  const GAME_QUESTIONS = [
-    ["What is my favorite video game of all time?",                   "Favorite Game"],
-    ["Which game has my favorite story?",                             "Best Story"],
-    ["Which game has my favorite art style?",                         "Favorite Art Style"],
-    ["Which game has had the biggest personal impact on me?",         "Biggest Personal Impact"],
-    ["Which game has the best combat in my opinion?",                 "Best Combat"],
-    ["Which game do I think is overhated?",                           "Overhated"],
-    ["Which game do I think is underrated?",                          "Underrated"],
-    ["Which game do I think is overrated?",                           "Overrated"],
-    ["Which game do I think needs a remake?",                         "Needs a Remake"],
-    ["Which game do I consider criminally overlooked?",               "Criminally Overlooked"],
-    ["Which game has my favorite protagonist?",                       "Favorite Protagonist"],
-    ["Which game has my favorite antagonist or villain?",             "Favorite Antagonist"],
-    ["Which game has my favorite soundtrack?",                        "Best Soundtrack"],
-    ["What is my favorite multiplayer game?",                         "Best Multiplayer"],
-    ["Which game fits not usually my thing but I love it?",           "Not Usually My Thing But..."],
-    ["Which game do I play to turn my brain off?",                    "Turn My Brain Off"],
-    ["What is the best game to play with friends?",                   "Best With Friends"],
-    ["What is my favorite retro game?",                               "Best Retro Game"],
-    ["What is my most nostalgic childhood game?",                     "Nostalgic Childhood Game"],
-    ["Which game do I think everyone should play?",                   "Game Everyone Should Play"],
-  ];
-
-  const MUSIC_QUESTIONS = [
-    ["What is my favorite album of all time?",                        "Favorite Album"],
-    ["Who is my favorite artist or band?",                            "Favorite Artist"],
-    ["What is my favorite song of all time?",                         "Favorite Song"],
-    ["Which album has my favorite opening track?",                    "Favorite Opening Track"],
-    ["Which album has my favorite closing track?",                    "Favorite Closing Track"],
-    ["Which album has the best cover art in my opinion?",             "Best Album Cover Art"],
-    ["Which artist do I think is overrated?",                         "Overrated Artist"],
-    ["Which artist do I think is underrated?",                        "Underrated Artist"],
-    ["Which album do I consider criminally overlooked?",              "Criminally Overlooked Album"],
-    ["Which artist do I think everyone should listen to?",            "Everyone Should Listen To"],
-    ["What is my favorite live album or concert recording?",          "Favorite Live Album"],
-    ["Which album do I think has no skips?",                          "No Skips Album"],
-    ["What is my favorite debut album?",                              "Favorite Debut Album"],
-    ["Which artist has my favorite discography overall?",             "Favorite Discography"],
-    ["What is my favorite guilty pleasure song or artist?",           "Guilty Pleasure"],
-    ["Which album fits not usually my thing but I love it?",          "Not Usually My Thing"],
-    ["What is my most nostalgic album or song?",                      "Most Nostalgic"],
-    ["Which artist do I wish I could see live?",                      "Wish I Could See Live"],
-    ["What is my favorite song to play loud in the car?",             "Best Car Song"],
-    ["Which album do I think everyone should hear at least once?",    "Everyone Should Hear Once"],
-    ["What is my favorite genre of music to listen to in the gym?",   "Best Gym Music Genre"],
-    ["What is my most hated music genre?",                            "Most Hated Genre"],
-    ["Which song has had the biggest impact on my life?",             "Most Impactful Song"],
-    ["What is my favorite childhood artist?",                         "Favorite Artist From Childhood"],
-  ];
-
-  const qMap = { movies: MOVIE_QUESTIONS, tv: TV_QUESTIONS, games: GAME_QUESTIONS, music: MUSIC_QUESTIONS };
-  const questions = qMap[quizType] || MOVIE_QUESTIONS;
-  const filename  = `cinequiz_template_${quizType}.csv`;
-
-  const enc = v => /[,"\n]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v;
-
-  const rows = questions.map(([question, category]) => [
-    question, "Single Choice (Radio Button)", "Question points",
-    "1", "1", "TRUE", "", category, "TRUE",
-    "", "", "", "",   // option 1: text, correct, points, hint
-    "", "", "", "",   // option 2
-    "", "", "", "",   // option 3
-    "", "", "", ""    // option 4
-  ].map(enc).join(","));
-
-  const csv = [headers.map(enc).join(","), ...rows].join("\n");
-
   const blob = new Blob([csv], { type: "text/csv" });
   const url  = URL.createObjectURL(blob);
   const a    = Object.assign(document.createElement("a"), { href: url, download: filename });
