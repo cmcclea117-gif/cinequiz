@@ -776,6 +776,91 @@
   }
   .suggest-chip-x:hover { color: var(--cream); }
 
+  /* ── QUIZ READY OVERLAY ── */
+  .quiz-ready-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(13,13,15,0.88);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+  }
+  .quiz-ready-overlay.visible { display: flex; }
+  .quiz-ready-card {
+    background: var(--surface);
+    border: 1px solid var(--gold-dim);
+    border-radius: 16px;
+    padding: 32px 28px 28px;
+    max-width: 420px;
+    width: 100%;
+    text-align: center;
+  }
+  .quiz-ready-eyebrow {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 10px;
+  }
+  .quiz-ready-title {
+    font-family: var(--font-display);
+    font-size: clamp(1.4rem, 5vw, 1.8rem);
+    font-style: italic;
+    color: var(--cream);
+    margin-bottom: 6px;
+    line-height: 1.2;
+  }
+  .quiz-ready-sub {
+    font-size: 13px;
+    color: var(--muted);
+    margin-bottom: 24px;
+    font-weight: 300;
+  }
+  .quiz-ready-link-row {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+  .quiz-ready-link-input {
+    flex: 1;
+    min-width: 0;
+    padding: 9px 13px;
+    background: var(--bg);
+    border: 1px solid var(--gold-dim);
+    border-radius: 6px;
+    color: var(--gold);
+    font-family: var(--font-body);
+    font-size: 13px;
+    outline: none;
+  }
+  .quiz-ready-copied {
+    font-size: 11px;
+    color: var(--gold-dim);
+    min-height: 16px;
+    margin-bottom: 12px;
+  }
+  .quiz-ready-social {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+  .quiz-ready-dismiss {
+    background: none;
+    border: none;
+    color: var(--muted);
+    font-size: 12px;
+    cursor: pointer;
+    font-family: var(--font-body);
+    letter-spacing: 0.03em;
+    transition: color 0.15s;
+  }
+  .quiz-ready-dismiss:hover { color: var(--cream); }
+
   /* ── SHARE OVERLAY ── */
   .share-overlay {
     display: none;
@@ -1373,6 +1458,25 @@
   </div>
 
 </div><!-- end .container -->
+
+<!-- QUIZ READY OVERLAY — shown after quiz is generated -->
+<div class="quiz-ready-overlay" id="quizReadyOverlay">
+  <div class="quiz-ready-card">
+    <div class="quiz-ready-eyebrow">✨ Quiz Ready!</div>
+    <div class="quiz-ready-title" id="quizReadyTitle">Your quiz is ready to share</div>
+    <div class="quiz-ready-sub">Publishing to get your share link…</div>
+    <div class="quiz-ready-link-row">
+      <input class="quiz-ready-link-input" id="quizReadyLink" readonly placeholder="Generating link…">
+      <button onclick="quizReadyCopy()" id="quizReadyCopyBtn" disabled>Copy</button>
+    </div>
+    <div class="quiz-ready-copied" id="quizReadyCopied"></div>
+    <div class="quiz-ready-social" id="quizReadySocial" style="display:none;">
+      <button class="share-overlay-social-btn twitter" style="flex:1;" onclick="quizReadySocial('twitter')">𝕏 Post</button>
+      <button class="share-overlay-social-btn whatsapp" style="flex:1;" onclick="quizReadySocial('whatsapp')">💬 WhatsApp</button>
+    </div>
+    <button class="quiz-ready-dismiss" onclick="closeQuizReadyOverlay()">Preview my quiz ↓</button>
+  </div>
+</div>
 
 <!-- SHARE OVERLAY — shown after quiz submission -->
 <div class="share-overlay" id="shareOverlay">
@@ -2294,6 +2398,7 @@ window.buildFromCreator = async function() {
   document.getElementById("gistBtn").disabled = false;
   setStatus("success", `Quiz built with ${quizData.length} questions!`);
   renderQuiz();
+  showQuizReadyOverlay();
 };
 
 /* ═══════════════════════════════════════════════════════════
@@ -3108,6 +3213,126 @@ window.submitQuiz = function() {
 };
 
 /* ═══════════════════════════════════════════════════════════
+   QUIZ READY OVERLAY
+═══════════════════════════════════════════════════════════ */
+async function showQuizReadyOverlay() {
+  const name = quizData.creatorName;
+  const overlay = document.getElementById("quizReadyOverlay");
+
+  // Set title
+  document.getElementById("quizReadyTitle").textContent =
+    name ? `How well do you know ${name}?` : "Your quiz is ready to share!";
+  document.getElementById("quizReadyLink").value = "";
+  document.getElementById("quizReadyCopied").textContent = "";
+  document.getElementById("quizReadyCopyBtn").disabled = true;
+  document.getElementById("quizReadySocial").style.display = "none";
+
+  // Hide theme toggle
+  document.getElementById("themeBtn").style.display = "none";
+  overlay.classList.add("visible");
+
+  // Auto-publish and get share link
+  try {
+    const res = await wfetch(GIST_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "Accept": "application/vnd.github+json" },
+      body: JSON.stringify({
+        description: `CineQuiz${name ? ` — ${name}` : ""}`,
+        public: true,
+        files: { "quiz.json": { content: JSON.stringify({ creatorName: name || null, questions: [...quizData] }, null, 2) } }
+      })
+    });
+
+    if (!res.ok) throw new Error(`Publish failed: ${res.status}`);
+    const gist = await res.json();
+    const rawUrl = gist.files["quiz.json"].raw_url;
+
+    // Update jsonUrlInput so rest of app knows the URL
+    document.getElementById("jsonUrlInput").value = rawUrl;
+    document.getElementById("gistBtn").disabled = true;
+
+    // Generate short link
+    let shareUrl = `${window.location.href.split("?")[0]}?quiz=${encodeURIComponent(rawUrl)}`;
+    try {
+      // Pick a random poster-style image from any question (avoid spoiling Q1's answer)
+      const allImages = quizData.flatMap(q => q.options ?? [])
+        .filter(o => o.image && o.resultType !== "person");
+      const fallbackImages = quizData.flatMap(q => q.options ?? []).filter(o => o.image);
+      const pool = allImages.length ? allImages : fallbackImages;
+      const imageUrl = pool.length
+        ? pool[Math.floor(Math.random() * pool.length)].image
+        : null;
+      const shortRes = await wfetch(`${WORKER_URL}/shorten`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ type: "quiz", quizUrl: rawUrl, creatorName: name ?? null, quizType, imageUrl })
+      });
+      if (shortRes.ok) {
+        const { shortUrl } = await shortRes.json();
+        _quizShortUrl = shortUrl;
+        shareUrl = shortUrl;
+        // Also update the share card link
+        document.getElementById("shareLink").value = shortUrl;
+        document.getElementById("linkOutput").style.display = "block";
+      }
+    } catch(e) {
+      // Fall back to long URL
+      document.getElementById("shareLink").value = shareUrl;
+      document.getElementById("linkOutput").style.display = "block";
+    }
+
+    document.getElementById("quizReadyLink").value = shareUrl;
+    document.getElementById("quizReadyCopyBtn").disabled = false;
+
+    // Auto-copy
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      document.getElementById("quizReadyCopied").textContent = "✓ Link copied to clipboard!";
+    } catch(e) {
+      document.getElementById("quizReadyCopied").textContent = "Tap Copy to share";
+    }
+
+    document.getElementById("quizReadySocial").style.display = "flex";
+
+  } catch(e) {
+    document.getElementById("quizReadyLink").value = "Publish failed — use the Share Quiz card below";
+    document.getElementById("quizReadyCopied").textContent = e.message;
+  }
+}
+
+window.quizReadyCopy = function() {
+  const val = document.getElementById("quizReadyLink").value;
+  if (!val) return;
+  navigator.clipboard.writeText(val).then(() => {
+    document.getElementById("quizReadyCopied").textContent = "✓ Copied!";
+  }).catch(() => {
+    document.getElementById("quizReadyLink").select();
+    document.execCommand("copy");
+    document.getElementById("quizReadyCopied").textContent = "✓ Copied!";
+  });
+};
+
+window.quizReadySocial = function(platform) {
+  const link = document.getElementById("quizReadyLink").value;
+  if (!link) return;
+  const name = quizData.creatorName;
+  const text = name
+    ? `Can you guess my taste? Take my CineQuiz to find out — How well do you know ${name}?`
+    : `Can you guess my taste? Take my CineQuiz!`;
+  const urls = {
+    twitter:  `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(link)}`,
+    whatsapp: `https://wa.me/?text=${encodeURIComponent(text + " " + link)}`
+  };
+  window.open(urls[platform], "_blank", "noopener,noreferrer");
+};
+
+function closeQuizReadyOverlay() {
+  document.getElementById("quizReadyOverlay").classList.remove("visible");
+  document.getElementById("themeBtn").style.display = "";
+  document.getElementById("scoreBanner").scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+/* ═══════════════════════════════════════════════════════════
    SHARE OVERLAY
 ═══════════════════════════════════════════════════════════ */
 let _shareOverlayLink = null;
@@ -3321,8 +3546,11 @@ window.publishToGist = async function() {
 
     // Shorten the quiz link
     try {
-      const imageUrl = quizData.find(q => q.options?.some(o => o.correct && o.image))
-        ?.options?.find(o => o.correct && o.image)?.image ?? null;
+      const allImages = quizData.flatMap(q => q.options ?? [])
+        .filter(o => o.image && o.resultType !== "person");
+      const fallbackImages = quizData.flatMap(q => q.options ?? []).filter(o => o.image);
+      const pool = allImages.length ? allImages : fallbackImages;
+      const imageUrl = pool.length ? pool[Math.floor(Math.random() * pool.length)].image : null;
       const shortRes = await wfetch(`${WORKER_URL}/shorten`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
