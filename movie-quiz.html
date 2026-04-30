@@ -776,6 +776,108 @@
   }
   .suggest-chip-x:hover { color: var(--cream); }
 
+  /* ── SHARE OVERLAY ── */
+  .share-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(13,13,15,0.88);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+  }
+  .share-overlay.visible { display: flex; }
+  .share-overlay-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 32px 28px 28px;
+    max-width: 420px;
+    width: 100%;
+    text-align: center;
+    position: relative;
+  }
+  .share-overlay-score {
+    font-family: var(--font-display);
+    font-size: clamp(3rem, 12vw, 5rem);
+    font-style: italic;
+    color: var(--gold);
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+  .share-overlay-total {
+    font-size: 14px;
+    color: var(--muted);
+    margin-bottom: 6px;
+  }
+  .share-overlay-pct {
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--cream);
+    margin-bottom: 24px;
+  }
+  .share-overlay-title {
+    font-family: var(--font-display);
+    font-size: 1.15rem;
+    font-style: italic;
+    color: var(--cream);
+    margin-bottom: 20px;
+    line-height: 1.3;
+  }
+  .share-overlay-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .share-overlay-social {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    margin-top: 4px;
+  }
+  .share-overlay-social-btn {
+    flex: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 9px 14px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    text-decoration: none;
+    transition: opacity 0.15s;
+    font-family: var(--font-body);
+  }
+  .share-overlay-social-btn:hover { opacity: 0.85; }
+  .share-overlay-social-btn.twitter { background: #000; color: #fff; }
+  .share-overlay-social-btn.whatsapp { background: #25D366; color: #fff; }
+  .share-overlay-dismiss {
+    background: none;
+    border: none;
+    color: var(--muted);
+    font-size: 12px;
+    cursor: pointer;
+    margin-top: 8px;
+    font-family: var(--font-body);
+    letter-spacing: 0.03em;
+    transition: color 0.15s;
+  }
+  .share-overlay-dismiss:hover { color: var(--cream); }
+  .share-overlay-copied {
+    font-size: 11px;
+    color: var(--gold-dim);
+    min-height: 16px;
+    margin-top: 2px;
+  }
+
   /* ── MODE TOGGLE ── */
   .mode-toggle {
     display: flex;
@@ -1094,31 +1196,19 @@
       <ol style="list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:10px;">
         <li style="display:flex;gap:12px;align-items:flex-start;">
           <span style="background:var(--gold);color:#0d0d0f;font-size:11px;font-weight:700;border-radius:50%;width:20px;height:20px;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;">1</span>
-          <span style="font-size:13px;color:var(--cream);line-height:1.5;">Select your <strong style="color:var(--gold);">Quiz Type</strong> — Movies, TV Shows, or Video Games.</span>
+          <span style="font-size:13px;color:var(--cream);line-height:1.5;">Select your <strong style="color:var(--gold);">Quiz Type</strong> — Movies, TV Shows, Video Games, Music, Books, or Board Games.</span>
         </li>
         <li style="display:flex;gap:12px;align-items:flex-start;">
           <span style="background:var(--gold);color:#0d0d0f;font-size:11px;font-weight:700;border-radius:50%;width:20px;height:20px;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;">2</span>
-          <span style="font-size:13px;color:var(--cream);line-height:1.5;">Click <strong style="color:var(--gold);">Download Template</strong> to get a pre-filled CSV with 20 starter questions. Fill in your correct answers in the Option columns. Leave wrong answer columns blank and the AI will generate them — or fill them in yourself. For actor/character answers, use the format <code style="background:var(--surface2);padding:1px 5px;border-radius:3px;font-size:12px;">Sue Silvester (Jane Lynch)</code> and add the show name in the Search Hint column.</span>
+          <span style="font-size:13px;color:var(--cream);line-height:1.5;">Click <strong style="color:var(--gold);">Download Template</strong> to get a CSV pre-filled with questions from the 60-question pool for your chosen type. Each quiz randomly selects 20 questions, so you can create multiple different quizzes before repeating. Fill in your correct answers — leave wrong answer columns blank and the AI will generate them, or fill them in yourself. For actor/character answers use the format <code style="background:var(--surface2);padding:1px 5px;border-radius:3px;font-size:12px;">Character (Actor)</code> and add the show or film name in the Search Hint column.</span>
         </li>
         <li style="display:flex;gap:12px;align-items:flex-start;">
           <span style="background:var(--gold);color:#0d0d0f;font-size:11px;font-weight:700;border-radius:50%;width:20px;height:20px;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;">3</span>
-          <span style="font-size:13px;color:var(--cream);line-height:1.5;">Paste your <strong style="color:var(--gold);">Anthropic API Key</strong> to enable AI wrong-answer generation. Get one free at <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener" style="color:var(--gold-dim);">console.anthropic.com</a>.</span>
+          <span style="font-size:13px;color:var(--cream);line-height:1.5;">Click <strong style="color:var(--gold);">Choose CSV</strong>, select your filled-in file, then click <strong style="color:var(--gold);">Load &amp; Enrich</strong>. The app fetches cover art and generates any missing wrong answers automatically.</span>
         </li>
         <li style="display:flex;gap:12px;align-items:flex-start;">
           <span style="background:var(--gold);color:#0d0d0f;font-size:11px;font-weight:700;border-radius:50%;width:20px;height:20px;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;">4</span>
-          <span style="font-size:13px;color:var(--cream);line-height:1.5;">Click <strong style="color:var(--gold);">Choose CSV</strong>, select your filled-in file, then click <strong style="color:var(--gold);">Load &amp; Enrich</strong>. The app fetches posters and generates wrong answers automatically.</span>
-        </li>
-        <li style="display:flex;gap:12px;align-items:flex-start;">
-          <span style="background:var(--gold);color:#0d0d0f;font-size:11px;font-weight:700;border-radius:50%;width:20px;height:20px;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;">5</span>
-          <span style="font-size:13px;color:var(--cream);line-height:1.5;">Scroll down to review the quiz. If it looks good, move on to sharing.</span>
-        </li>
-        <li style="display:flex;gap:12px;align-items:flex-start;">
-          <span style="background:var(--gold);color:#0d0d0f;font-size:11px;font-weight:700;border-radius:50%;width:20px;height:20px;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;">6</span>
-          <span style="font-size:13px;color:var(--cream);line-height:1.5;">In the <strong style="color:var(--gold);">Share Quiz</strong> card, paste your <strong style="color:var(--gold);">GitHub Token</strong> (classic token with <code style="background:var(--surface2);padding:1px 5px;border-radius:3px;font-size:12px;">gist</code> scope — generate one at <a href="https://github.com/settings/tokens/new?scopes=gist&description=CineQuiz" target="_blank" rel="noopener" style="color:var(--gold-dim);">github.com/settings/tokens</a>) and click <strong style="color:var(--gold);">Publish to Gist</strong>.</span>
-        </li>
-        <li style="display:flex;gap:12px;align-items:flex-start;">
-          <span style="background:var(--gold);color:#0d0d0f;font-size:11px;font-weight:700;border-radius:50%;width:20px;height:20px;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;">7</span>
-          <span style="font-size:13px;color:var(--cream);line-height:1.5;">A shareable link is generated automatically. Click <strong style="color:var(--gold);">Copy</strong> and send it to your friends — when they open it, the quiz loads instantly!</span>
+          <span style="font-size:13px;color:var(--cream);line-height:1.5;">Scroll down to review the quiz. When it looks good, click <strong style="color:var(--gold);">Publish &amp; Get Share Link</strong> — then copy the link and send it to your friends!</span>
         </li>
       </ol>
     </div>
@@ -1266,7 +1356,7 @@
 
     <form id="quizForm" onsubmit="return false;"></form>
 
-    <div class="action-row">
+    <div class="action-row" style="margin-bottom:32px;">
       <button class="primary" id="submitBtn" onclick="submitQuiz()">Submit Quiz</button>
     </div>
 
@@ -1283,6 +1373,32 @@
   </div>
 
 </div><!-- end .container -->
+
+<!-- SHARE OVERLAY — shown after quiz submission -->
+<div class="share-overlay" id="shareOverlay">
+  <div class="share-overlay-card">
+    <div class="share-overlay-score" id="shareOverlayScore">0</div>
+    <div class="share-overlay-total" id="shareOverlayTotal">out of 0</div>
+    <div class="share-overlay-pct" id="shareOverlayPct"></div>
+    <div class="share-overlay-title" id="shareOverlayTitle"></div>
+    <div class="share-overlay-actions">
+      <button class="primary" id="shareOverlayBtn" onclick="shareOverlayShare()" style="width:100%;padding:12px;font-size:14px;">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="3" r="1.5"/><circle cx="4" cy="8" r="1.5"/><circle cx="12" cy="13" r="1.5"/><path d="M5.5 9l5 3M10.5 4.5l-5 3"/></svg>
+        Share Results
+      </button>
+      <div class="share-overlay-copied" id="shareOverlayCopied"></div>
+      <div class="share-overlay-social" id="shareOverlaySocial" style="display:none;">
+        <button class="share-overlay-social-btn twitter" onclick="shareOverlaySocial('twitter')">
+          𝕏 Post
+        </button>
+        <button class="share-overlay-social-btn whatsapp" onclick="shareOverlaySocial('whatsapp')">
+          💬 WhatsApp
+        </button>
+      </div>
+      <button class="share-overlay-dismiss" onclick="closeShareOverlay()">See my answers ↓</button>
+    </div>
+  </div>
+</div>
 
 <!-- RESULTS PAGE — shown when ?results= URL param is present -->
 <div id="resultsPage">
@@ -2259,7 +2375,7 @@ async function generateWrongAnswers(question, correctAnswer, correctSearchHint =
     : 'movie';
   const isMusic   = quizType === 'music';
   const isBooks   = quizType === 'books';
-  const isGenre   = /genre/i.test(question);
+  const isGenre   = isMusic && /genre/i.test(question); // only meaningful for music questions
 
   // Only detect actor format for non-music quizzes
   // Music titles often have parentheses e.g. "I Know There's Gonna Be (Good Times)"
@@ -2523,11 +2639,14 @@ async function enrichOption(opt) {
     }
 
     if (quizType === 'games') {
-      const res = await wfetch(
-        `${RAWG_BASE}/games?search=${encodeURIComponent(query)}&page_size=1`
-      ).then(r => r.json());
-      const game = res.results?.[0];
-      return { ...opt, resultType: "game", image: game?.background_image || null, knownFor: null };
+      try {
+        const res = await wfetch(`${RAWG_BASE}/games?search=${encodeURIComponent(query)}&page_size=1`);
+        const data = await res.json();
+        const game = data.results?.[0];
+        return { ...opt, resultType: "game", image: game?.background_image || null, knownFor: null };
+      } catch(e) {
+        return { ...opt, resultType: "game", image: null, knownFor: null };
+      }
     }
 
     if (quizType === 'tv') {
@@ -2810,6 +2929,10 @@ function renderQuiz() {
   submitted = false;
   userAnswers = [];
 
+  // Hide creator/import forms while quiz is active
+  document.getElementById("creatorSection").style.display = "none";
+  document.getElementById("importSection").style.display = "none";
+
   document.getElementById("scoreBanner").style.display = "none";
   document.getElementById("postSubmitActions").style.display = "none";
   document.getElementById("resultsLinkOutput").style.display = "none";
@@ -2965,6 +3088,8 @@ window.submitQuiz = function() {
   }
   ctaBanner.style.display = isSharedQuiz ? "block" : "none";
 
+  const total = quizData.length;
+
   banner.style.display = "block";
   banner.scrollIntoView({ behavior: "smooth", block: "start" });
 
@@ -2972,6 +3097,138 @@ window.submitQuiz = function() {
   document.getElementById("postSubmitActions").style.display = "flex";
   document.getElementById("exportResultsBtn").style.display = "";
   document.getElementById("resultsCardBtn").style.display = "";
+
+  // Show share overlay
+  showShareOverlay(score, total);
+};
+
+/* ═══════════════════════════════════════════════════════════
+   SHARE OVERLAY
+═══════════════════════════════════════════════════════════ */
+let _shareOverlayLink = null;
+
+function showShareOverlay(score, total) {
+  const pct = Math.round((score / total) * 100);
+  const name = quizData.creatorName;
+  document.getElementById("shareOverlayScore").textContent = score;
+  document.getElementById("shareOverlayTotal").textContent = `out of ${total}`;
+  document.getElementById("shareOverlayPct").textContent =
+    pct >= 80 ? `${pct}% — You really know them! 🎉` :
+    pct >= 50 ? `${pct}% — Not bad!` :
+    `${pct}% — Room to grow 😄`;
+  document.getElementById("shareOverlayTitle").textContent =
+    name ? `How well do you know ${name}?` : "How did you do?";
+  document.getElementById("shareOverlayBtn").disabled = false;
+  document.getElementById("shareOverlayBtn").innerHTML = `<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="3" r="1.5"/><circle cx="4" cy="8" r="1.5"/><circle cx="12" cy="13" r="1.5"/><path d="M5.5 9l5 3M10.5 4.5l-5 3"/></svg> Share Results`;
+  document.getElementById("shareOverlayCopied").textContent = "";
+  document.getElementById("shareOverlaySocial").style.display = "none";
+  _shareOverlayLink = null;
+  document.getElementById("shareOverlay").classList.add("visible");
+  document.getElementById("themeBtn").style.display = "none";
+}
+
+function closeShareOverlay() {
+  document.getElementById("shareOverlay").classList.remove("visible");
+  document.getElementById("themeBtn").style.display = "";
+  document.getElementById("scoreBanner").scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+window.shareOverlayShare = async function() {
+  const btn = document.getElementById("shareOverlayBtn");
+  btn.disabled = true;
+  btn.textContent = "Publishing…";
+
+  try {
+    // Reuse shareResults logic but capture the link here
+    const score = userAnswers.filter((id, i) => quizData[i]?.options.find(o => o.id === id)?.correct).length;
+    const total = quizData.length;
+    const quizUrl = document.getElementById("jsonUrlInput")?.value?.trim() || null;
+
+    const answers = quizData.map((q, i) => {
+      const chosen  = q.options.find(o => o.id === userAnswers[i]);
+      const correct = q.options.find(o => o.correct);
+      return {
+        question:     q.question,
+        correct:      correct?.text ?? "",
+        chosen:       chosen?.text ?? "No answer",
+        correctImage: correct?.image ?? null,
+        chosenImage:  chosen?.image ?? null,
+        isRight:      chosen?.correct === true
+      };
+    });
+
+    const payload = {
+      type: "results",
+      creatorName: quizData.creatorName ?? null,
+      quizType,
+      quizUrl,
+      score,
+      total,
+      pct: Math.round((score / total) * 100),
+      takenAt: Date.now(),
+      answers
+    };
+
+    const res = await wfetch(GIST_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "Accept": "application/vnd.github+json" },
+      body: JSON.stringify({
+        description: `CineQuiz Results${quizData.creatorName ? ` — How well do you know ${quizData.creatorName}?` : ""}`,
+        public: true,
+        files: { "results.json": { content: JSON.stringify(payload, null, 2) } }
+      })
+    });
+
+    if (!res.ok) throw new Error(`Gist failed: ${res.status}`);
+    const gist = await res.json();
+    const rawUrl = gist.files["results.json"].raw_url;
+    const base = window.location.href.split("?")[0];
+    _shareOverlayLink = `${base}?results=${encodeURIComponent(rawUrl)}`;
+
+    // Also update the existing results link output
+    document.getElementById("resultsShareLink").value = _shareOverlayLink;
+    document.getElementById("resultsLinkOutput").style.display = "block";
+
+    // Auto-copy to clipboard
+    try {
+      await navigator.clipboard.writeText(_shareOverlayLink);
+      document.getElementById("shareOverlayCopied").textContent = "✓ Link copied to clipboard!";
+    } catch(e) {
+      document.getElementById("shareOverlayCopied").textContent = "Link ready — copy it below";
+    }
+
+    btn.textContent = "✓ Shared!";
+    document.getElementById("shareOverlaySocial").style.display = "flex";
+
+  } catch(e) {
+    toast(`Share failed: ${e.message}`);
+    btn.disabled = false;
+    btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="3" r="1.5"/><circle cx="4" cy="8" r="1.5"/><circle cx="12" cy="13" r="1.5"/><path d="M5.5 9l5 3M10.5 4.5l-5 3"/></svg> Share Results`;
+  }
+};
+
+window.shareOverlaySocial = function(platform) {
+  if (!_shareOverlayLink) return;
+  const name = quizData.creatorName;
+  const score = userAnswers.filter((id, i) => quizData[i]?.options.find(o => o.id === id)?.correct).length;
+  const total = quizData.length;
+  const pct = Math.round((score / total) * 100);
+  const text = name
+    ? `I just took ${name}'s CineQuiz and scored ${score}/${total} (${pct}%)! How well do you know them?`
+    : `I just took a CineQuiz and scored ${score}/${total} (${pct}%)! Think you can beat me?`;
+
+  // Prefer the spoiler-free quiz link for sharing — fall back to results link
+  const quizUrl = document.getElementById("jsonUrlInput")?.value?.trim();
+  const base = window.location.href.split("?")[0];
+  const shareUrl = quizUrl
+    ? `${base}?quiz=${encodeURIComponent(quizUrl)}`
+    : _shareOverlayLink;
+
+  const urls = {
+    twitter:  `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(shareUrl)}`,
+    whatsapp: `https://wa.me/?text=${encodeURIComponent(text + " " + shareUrl)}`
+  };
+  window.open(urls[platform], "_blank", "noopener,noreferrer");
 };
 
 /* ═══════════════════════════════════════════════════════════
