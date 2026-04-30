@@ -2427,7 +2427,8 @@ async function fetchSuggestions(idx, questionId) {
     });
 
   } catch (e) {
-    console.warn('Suggestions failed:', e);
+    console.error('Suggestions failed:', e);
+    toast(`Suggestions unavailable: ${e.message}`);
   }
 
   btn.textContent = '💡';
