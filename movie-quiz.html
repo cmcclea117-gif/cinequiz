@@ -3193,10 +3193,12 @@ window.shareOverlayShare = async function() {
     const longResultsUrl = `${base}?results=${encodeURIComponent(rawUrl)}`;
     _shareOverlayLink = longResultsUrl;
 
-    // Shorten the results link (fire and update if it works)
+    // Shorten results link + quiz link (for social share buttons)
+    const imageUrl = quizData.find(q => q.options?.some(o => o.correct && o.image))
+      ?.options?.find(o => o.correct && o.image)?.image ?? null;
+
+    // Shorten results link
     try {
-      const imageUrl = quizData.find(q => q.options?.some(o => o.correct && o.image))
-        ?.options?.find(o => o.correct && o.image)?.image ?? null;
       const shortRes = await wfetch(`${WORKER_URL}/shorten`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -3207,6 +3209,21 @@ window.shareOverlayShare = async function() {
         _shareOverlayLink = shortUrl;
       }
     } catch(e) { /* silent — long URL still works */ }
+
+    // Shorten quiz link for social buttons if not already set (e.g. player taking someone else's quiz)
+    if (!_quizShortUrl && quizUrl) {
+      try {
+        const quizShortRes = await wfetch(`${WORKER_URL}/shorten`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ type: "quiz", quizUrl, creatorName: quizData.creatorName ?? null, quizType, imageUrl })
+        });
+        if (quizShortRes.ok) {
+          const { shortUrl } = await quizShortRes.json();
+          _quizShortUrl = shortUrl;
+        }
+      } catch(e) { /* silent */ }
+    }
 
     // Update results link output
     document.getElementById("resultsShareLink").value = _shareOverlayLink;
