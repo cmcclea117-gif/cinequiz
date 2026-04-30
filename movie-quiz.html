@@ -3106,6 +3106,7 @@ window.submitQuiz = function() {
    SHARE OVERLAY
 ═══════════════════════════════════════════════════════════ */
 let _shareOverlayLink = null;
+let _quizShortUrl = null; // short link for the quiz (spoiler-free)
 
 function showShareOverlay(score, total) {
   const pct = Math.round((score / total) * 100);
@@ -3123,6 +3124,7 @@ function showShareOverlay(score, total) {
   document.getElementById("shareOverlayCopied").textContent = "";
   document.getElementById("shareOverlaySocial").style.display = "none";
   _shareOverlayLink = null;
+  // keep _quizShortUrl — it was set at publish time and is still valid
   document.getElementById("shareOverlay").classList.add("visible");
   document.getElementById("themeBtn").style.display = "none";
 }
@@ -3183,9 +3185,25 @@ window.shareOverlayShare = async function() {
     const gist = await res.json();
     const rawUrl = gist.files["results.json"].raw_url;
     const base = window.location.href.split("?")[0];
-    _shareOverlayLink = `${base}?results=${encodeURIComponent(rawUrl)}`;
+    const longResultsUrl = `${base}?results=${encodeURIComponent(rawUrl)}`;
+    _shareOverlayLink = longResultsUrl;
 
-    // Also update the existing results link output
+    // Shorten the results link (fire and update if it works)
+    try {
+      const imageUrl = quizData.find(q => q.options?.some(o => o.correct && o.image))
+        ?.options?.find(o => o.correct && o.image)?.image ?? null;
+      const shortRes = await wfetch(`${WORKER_URL}/shorten`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ type: "results", resultsUrl: rawUrl, quizUrl, creatorName: quizData.creatorName ?? null, quizType, imageUrl, score, total, pct: Math.round((score/total)*100) })
+      });
+      if (shortRes.ok) {
+        const { shortUrl } = await shortRes.json();
+        _shareOverlayLink = shortUrl;
+      }
+    } catch(e) { /* silent — long URL still works */ }
+
+    // Update results link output
     document.getElementById("resultsShareLink").value = _shareOverlayLink;
     document.getElementById("resultsLinkOutput").style.display = "block";
 
@@ -3217,12 +3235,11 @@ window.shareOverlaySocial = function(platform) {
     ? `I just took ${name}'s CineQuiz and scored ${score}/${total} (${pct}%)! How well do you know them?`
     : `I just took a CineQuiz and scored ${score}/${total} (${pct}%)! Think you can beat me?`;
 
-  // Prefer the spoiler-free quiz link for sharing — fall back to results link
+  // Use short quiz link if available, then long quiz link, then results link
   const quizUrl = document.getElementById("jsonUrlInput")?.value?.trim();
   const base = window.location.href.split("?")[0];
-  const shareUrl = quizUrl
-    ? `${base}?quiz=${encodeURIComponent(quizUrl)}`
-    : _shareOverlayLink;
+  const shareUrl = _quizShortUrl
+    || (quizUrl ? `${base}?quiz=${encodeURIComponent(quizUrl)}` : _shareOverlayLink);
 
   const urls = {
     twitter:  `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(shareUrl)}`,
@@ -3279,6 +3296,22 @@ window.publishToGist = async function() {
     document.getElementById("jsonUrlInput").value = rawUrl;
     setStatus("success", "Published! Share link generated below.");
     generateShareLink();
+
+    // Shorten the quiz link
+    try {
+      const imageUrl = quizData.find(q => q.options?.some(o => o.correct && o.image))
+        ?.options?.find(o => o.correct && o.image)?.image ?? null;
+      const shortRes = await wfetch(`${WORKER_URL}/shorten`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ type: "quiz", quizUrl: rawUrl, creatorName: quizData.creatorName ?? null, quizType, imageUrl })
+      });
+      if (shortRes.ok) {
+        const { shortUrl } = await shortRes.json();
+        _quizShortUrl = shortUrl;
+        document.getElementById("shareLink").value = shortUrl;
+      }
+    } catch(e) { /* silent — long URL still works */ }
 
     // Fetch and show play count (will be 0 for new quizzes)
     try {
