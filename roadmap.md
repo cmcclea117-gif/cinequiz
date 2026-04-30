@@ -40,7 +40,7 @@ Last updated: April 30, 2026
 - 2-column layout (was 3 columns) — question + answer/hint, no separate hint column
 - Search hint moves to row 2 beneath the answer input, spanning the answer column only
 - Hint placeholder updated to "Search hint (optional)" — self-explanatory
-- Quiz type buttons use `auto-fit` grid — wrap to 2 per row on mobile instead of overflowing
+- Quiz type buttons use auto-fit grid — wrap to 2 per row on mobile instead of overflowing
 
 ### CSV Import Instructions (April 30, 2026)
 - Rewritten from 7 outdated steps to 4 accurate ones
@@ -50,33 +50,53 @@ Last updated: April 30, 2026
 
 ### Share Overlay + Social Sharing (April 30, 2026)
 - Post-submit overlay appears immediately with score and contextual label
-- Single "Share Results" button: publishes to Gist, auto-copies link to clipboard, confirms with "✓ Link copied to clipboard!"
+- Single "Share Results" button: publishes to Gist, auto-copies link to clipboard
 - X Post and WhatsApp buttons appear once link is ready, pre-filled with score + creator name
 - Share text: "I just took [Name]'s CineQuiz and scored X/Y (Z%)! How well do you know them?"
-- Social share uses spoiler-free ?quiz= link so recipients take the quiz fresh
-- "See my answers ↓" dismisses overlay and scrolls to answer review
+- Social share uses spoiler-free quiz link so recipients take the quiz fresh
+- "See my answers" dismisses overlay and scrolls to answer review
 - Theme toggle hidden while overlay is open, restored on close
 
----
+### Short Links + OG Previews (April 30, 2026)
+- Worker /q/:code route serves a styled redirect page with full Open Graph meta tags
+- Worker /shorten route creates short links stored in KV, returns cinequiz.quest/q/xxxxxx
+- Quiz links show: "How well do you know [Name]?" + random poster image from quiz options
+- Results links show: "I scored X/Y on [Name]'s CineQuiz!" + "Think you can beat Z%?"
+- OG image picked randomly from all non-person options (avoids spoiling Q1's answer)
+- Cloudflare route cinequiz.quest/q/* intercepts before GitHub Pages
+- Short links generated automatically on quiz publish and on results share
+- Social share buttons (X + WhatsApp) use short quiz link (spoiler-free)
+- Clipboard copy gets the short results link
+- Falls back to long URLs silently if shortening fails
 
-## 🔜 Next Up
+### Quiz Ready Overlay (April 30, 2026)
+- Appears automatically after quiz generation completes
+- Auto-publishes to Gist and shortens link in the background while user sees the overlay
+- Displays short link with one-tap copy, X Post and WhatsApp share buttons
+- Share text: "Can you guess my taste? Take my CineQuiz — How well do you know [Name]?"
+- "Preview my quiz" dismisses overlay and scrolls to first question
+- "Create your own quiz" CTA added to results page footer
 
-### Answer Autocorrect / Capitalization
-**What:** Before generating wrong answers, run the creator's answer through a light normalization pass — fix obvious misspellings, apply correct capitalization (title case for films/games, etc.), and standardize formats like "Character (Actor)".
+### Answer Autocorrect + Capitalization (April 30, 2026)
+- normalizeAnswer(text, type) runs on creator answers before generation
+- Applies smart title case: capitalises first letter of each word, skips articles/prepositions
+- Handles hyphenated titles: "spider-man" to "Spider-Man"
+- Handles "Character (Actor)" format: normalises both parts independently
+- Preserves intentional mixed-case (iPhone, LeBron, McGregor)
+- Music is conservative: only normalises if fully lowercase or fully uppercase
+- Also runs on AI-generated wrong answers to catch AI typos
+- AI spell-correction folded into wrong answer generation prompt — returns {"answer": "Thriller", "wrong": [...]}
+- Corrected spelling written back to creator form input so they can see the change
 
-**Why:** Misspelled or oddly-cased answers are a giveaway to quiz-takers. "the godfather" or "pulp ficton" makes the correct answer obvious from user error alone.
+### quizType Persistence (April 30, 2026)
+- Selected quiz type saved to localStorage under cq-quiz-type
+- Restored on page load before renderCreatorForm() runs
+- Switching tabs or refreshing no longer resets to Movies
 
-**Tech:** One extra AI call (or a simpler regex+dictionary pass) before the wrong answer generation step. Could be a fire-and-forget suggestion shown to the creator ("Did you mean: The Godfather?") rather than auto-replacing.
-
-**Considerations:**
-- Should be transparent to the creator — show the normalized version and let them accept or override
-- Title case rules differ by category (films = title case, artists = as-stylized)
-- Could fold into the existing generation prompt rather than a separate call
-
----
-
-### quizType Persistence
-Save the selected quiz type to localStorage so switching tabs doesn't reset to Movies.
+### Bug Fixes (April 30, 2026)
+- isGenre detection restricted to music only — was firing for video game questions containing "genre"
+- Workers AI response handling hardened — .response field can be a pre-parsed object in some builds
+- submitQuiz: total variable was undeclared causing silent ReferenceError blocking score banner and overlay
 
 ---
 
@@ -89,9 +109,9 @@ Save the selected quiz type to localStorage so switching tabs doesn't reset to M
 
 **Tech requirements:**
 - Cloudflare D1 (SQLite on Cloudflare) — needed for proper aggregation queries
-- Schema: `quiz_answers(question_id, answer_text, quiz_type, submitted_at)`
-- Worker route: `POST /record-answer` (fire-and-forget on submit)
-- Worker route: `GET /question-stats?id=m01` returns top answers + percentages
+- Schema: quiz_answers(question_id, answer_text, quiz_type, submitted_at)
+- Worker route: POST /record-answer (fire-and-forget on submit)
+- Worker route: GET /question-stats?id=m01 returns top answers + percentages
 - Privacy/consent: opt-in checkbox on submit — "Include my answers in anonymous CineQuiz stats"
 
 **Unlocks with D1:**
@@ -103,7 +123,7 @@ Save the selected quiz type to localStorage so switching tabs doesn't reset to M
 **Considerations:**
 - Answer normalization is hard — "The Godfather" vs "godfather" need to map together. Use AI to normalize on write.
 - Start opt-in only, make it prominent not buried
-- Tabled until sharing and engagement features are stable
+- Tabled until sharing and engagement features are stable and proven
 
 ---
 
@@ -163,7 +183,7 @@ Each needs: 60 questions, an image API (or graceful placeholder fallback), AI pr
 
 ## Backlog / Parked Ideas
 
-- Certificate/SSL pinning — not applicable to web apps (browser controls SSL stack). Current protections (HTTPS + APP_SECRET + CORS + rate limiting + killswitch) are the right model.
+- Certificate/SSL pinning — not applicable to web apps (browser controls SSL stack). Current protections are the right model.
 - Row Level Security — not applicable, no SQL database currently. Revisit when D1 is added.
 - Hardcover API for books — switched to Open Library (no key needed). Revisit if cover quality insufficient.
 - Per-question answer save indicator — small UI tick showing answer was saved to localStorage
@@ -174,11 +194,11 @@ Each needs: 60 questions, an image API (or graceful placeholder fallback), AI pr
 
 ## Known Issues / Tech Debt
 
-- quizType state not saved to localStorage — switching tabs resets to movies
 - BGG API can be slow (2-step XML fetch) — consider caching results in KV
 - Last.fm images sometimes return empty string instead of null — causes broken img tags
 - Results page hides score (by design) but also hides percentage — reconsider UX
-- RAWG (video game images) blocked on some corporate/institutional networks — low priority, graceful fallback already in place
+- RAWG (video game images) blocked on some corporate/institutional networks — low priority, graceful fallback in place
+- Old quiz short links (published before short link feature) don't have OG previews — no retroactive fix possible
 
 ---
 

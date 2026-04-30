@@ -1,0 +1,28 @@
+feat: short links, OG previews, quiz ready overlay, autocorrect, UX fixes
+
+worker.js
+- Add /shorten route: creates cinequiz.quest/q/xxxxx short links in KV
+- Add /q/:code route: serves OG meta tag page then redirects to quiz
+  - Quiz links: "How well do you know [Name]?" + random poster image
+  - Results links: "I scored X/Y on [Name]'s CineQuiz!"
+- Add generateShortCode() helper (6-char alphanumeric, omits ambiguous chars)
+
+movie-quiz.html
+- Quiz Ready overlay: auto-publishes + shortens after generation, shows
+  share link + X/WhatsApp buttons, "Preview my quiz" dismiss
+- Short links: auto-generated on publish and on results share; social
+  buttons use short quiz link (spoiler-free); clipboard gets short
+  results link; silent fallback to long URLs
+- OG image: random non-person poster from all options (not Q1 answer)
+- Answer autocorrect: normalizeAnswer() applies smart title case, handles
+  hyphenated titles and Character (Actor) format, conservative for music
+- AI spell-correction: wrong answer prompt now returns {"answer","wrong"}
+  so correct answer is spell-checked at generation time; corrected
+  spelling written back to creator input; all return paths handle
+  Workers AI returning pre-parsed object vs string
+- quizType persistence: saved to localStorage on select, restored on load
+- Results page: "Create your own quiz" CTA added to footer
+- Fix isGenre: restricted to music only (was breaking video game wrong
+  answers and RAWG image lookup)
+- Fix Workers AI response parsing: handle object/array/string uniformly
+  across generateWrongAnswers and suggest route

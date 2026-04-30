@@ -2262,6 +2262,72 @@ function renderCreatorForm() {
 /* ═══════════════════════════════════════════════════════════
    BUILD FROM CREATOR
 ═══════════════════════════════════════════════════════════ */
+/* ═══════════════════════════════════════════════════════════
+   ANSWER NORMALIZATION
+═══════════════════════════════════════════════════════════ */
+const TITLE_CASE_SKIP = new Set([
+  'a','an','the','and','but','or','for','nor','so','yet',
+  'on','at','to','by','in','of','up','as','is','it','vs','via'
+]);
+
+function smartCapitalize(word) {
+  if (!word) return word;
+  // If word has uppercase letters after position 0, treat as intentional (e.g. iPhone, McGregor, LeBron)
+  if (word.slice(1) !== word.slice(1).toLowerCase()) return word;
+  // Handle hyphenated words: "spider-man" → "Spider-Man"
+  if (word.includes('-')) return word.split('-').map(w => smartCapitalize(w)).join('-');
+  return word.charAt(0).toUpperCase() + word.slice(1);
+}
+
+function toSmartTitleCase(str) {
+  const words = str.split(' ');
+  return words.map((word, i) => {
+    const lower = word.toLowerCase();
+    // Always capitalize first and last word
+    if (i === 0 || i === words.length - 1) return smartCapitalize(word);
+    // Skip articles/prepositions unless they follow a colon
+    if (TITLE_CASE_SKIP.has(lower)) return lower;
+    return smartCapitalize(word);
+  }).join(' ');
+}
+
+function normalizeAnswer(text, type) {
+  if (!text) return text;
+  // Basic cleanup
+  text = text.trim().replace(/\s+/g, ' ');
+
+  // Handle "Character (Actor)" format — normalize both parts
+  const parenMatch = text.match(/^(.+?)\s*\((.+?)\)(.*)$/);
+  if (parenMatch) {
+    const main  = toSmartTitleCase(parenMatch[1].trim());
+    const paren = toSmartTitleCase(parenMatch[2].trim());
+    const rest  = parenMatch[3].trim();
+    return rest ? `${main} (${paren}) ${rest}` : `${main} (${paren})`;
+  }
+
+  // Music: only fix if fully lowercase or fully uppercase — artists self-style unusually
+  if (type === 'music') {
+    if (text === text.toLowerCase() || text === text.toUpperCase()) {
+      return toSmartTitleCase(text.toLowerCase());
+    }
+    return text;
+  }
+
+  // All other types: apply smart title case
+  // But only if text is mostly lowercase — if mixed case, user may be intentional
+  const upperCount = (text.match(/[A-Z]/g) || []).length;
+  const letterCount = (text.match(/[a-zA-Z]/g) || []).length;
+  const isAllLower = text === text.toLowerCase();
+  const isAllUpper = text === text.toUpperCase();
+  const isMostlyLower = letterCount > 0 && upperCount / letterCount < 0.15;
+
+  if (isAllLower || isAllUpper || isMostlyLower) {
+    return toSmartTitleCase(text.toLowerCase());
+  }
+
+  return text;
+}
+
 window.buildFromCreator = async function() {
   const form = document.getElementById('creatorForm');
   const questionIds = JSON.parse(form.dataset.questionIds || '[]');
@@ -2271,9 +2337,16 @@ window.buildFromCreator = async function() {
   questionIds.forEach((id, i) => {
     const qObj = pool.find(q => q.id === id);
     if (!qObj) return;
-    const answer = document.getElementById(`ca_${i}`)?.value.trim();
-    const hint   = document.getElementById(`ch_${i}`)?.value.trim();
-    if (!answer) return;
+    const rawAnswer = document.getElementById(`ca_${i}`)?.value.trim();
+    const hint      = document.getElementById(`ch_${i}`)?.value.trim();
+    if (!rawAnswer) return;
+
+    const answer = normalizeAnswer(rawAnswer, quizType);
+    // Update input so creator sees the corrected version
+    if (answer !== rawAnswer) {
+      const input = document.getElementById(`ca_${i}`);
+      if (input) input.value = answer;
+    }
 
     base.push({
       id: `${id}_${Math.random().toString(36).slice(2,6)}`,
@@ -2288,6 +2361,13 @@ window.buildFromCreator = async function() {
   });
 
   if (!base.length) return setStatus("error", "Fill in at least one answer first.");
+
+  // Count corrections made
+  const corrected = questionIds.filter((id, i) => {
+    const input = document.getElementById(`ca_${i}`);
+    return input && input.dataset.original && input.dataset.original !== input.value;
+  }).length;
+  // (inputs don't track originals — corrections already applied silently above)
 
   const creatorName = document.getElementById("creatorName")?.value.trim() || null;
 
@@ -2319,11 +2399,11 @@ window.buildFromCreator = async function() {
     overlayLbl.textContent = `Generating wrong answers… (${i + 1}/${base.length})`;
     overlayStep.textContent = "Step 1 of 2 — AI is thinking";
 
-    let generated = [];
+    let result = { corrected: null, wrong: [] };
     let attempts = 0;
     while (attempts < 3) {
-      generated = await generateWrongAnswers(q.question, correct.text, correct.searchHint);
-      if (generated.length > 0) break;
+      result = await generateWrongAnswers(q.question, correct.text, correct.searchHint);
+      if (result.wrong.length > 0) break;
       attempts++;
       if (attempts < 3) {
         labelEl.textContent = `Rate limited — retrying ${i + 1}/${base.length} in 15s…`;
@@ -2333,9 +2413,17 @@ window.buildFromCreator = async function() {
       }
     }
 
+    // Apply AI spell-correction to the correct answer if provided
+    if (result.corrected && result.corrected !== correct.text) {
+      correct.text = result.corrected;
+      // Update the input so the creator sees the corrected spelling
+      const inputEl = document.getElementById(`ca_${i}`);
+      if (inputEl) inputEl.value = result.corrected;
+    }
+
     // For music with a search hint, give wrong answers the same hint format
     // so they also get "Known for:" labels during enrichment
-    const newOpts = generated.map((text, oi) => ({
+    const newOpts = result.wrong.map((text, oi) => ({
       id: `${q.id}_gen${oi}_${Math.random().toString(36).slice(2,6)}`,
       text,
       correct: false,
@@ -2414,6 +2502,7 @@ function toggleInstructions() {
 
 function setQuizType(type) {
   quizType = type;
+  localStorage.setItem("cq-quiz-type", type);
   const idMap  = { movies:'typeMovies', tv:'typeTV', games:'typeGames', music:'typeMusic', books:'typeBooks', boardgames:'typeBoardgames' };
   const cidMap = { movies:'ctypeMovies', tv:'ctypeTV', games:'ctypeGames', music:'ctypeMusic', books:'ctypeBooks', boardgames:'ctypeBoardgames' };
   Object.keys(idMap).forEach(t => {
@@ -2429,6 +2518,9 @@ function setQuizType(type) {
    AUTO-LOAD FROM URL PARAM  (?quiz=https://...)
 ═══════════════════════════════════════════════════════════ */
 window.addEventListener("DOMContentLoaded", () => {
+  // Restore last-used quiz type
+  const savedType = localStorage.getItem("cq-quiz-type");
+  if (savedType && QUESTION_POOLS[savedType]) quizType = savedType;
   renderCreatorForm();
   checkForResultsPage().then(isResults => {
     if (isResults) return; // results page handles everything
@@ -2512,15 +2604,19 @@ async function generateWrongAnswers(question, correctAnswer, correctSearchHint =
 - Match the same era and genre as the correct answer
 - All 3 wrong answers must be the same TYPE (album = album, artist = artist, song = song)` : "";
 
-  const prompt = `Generate exactly 3 wrong answer options for this quiz question about ${typeLabel}s.
+  const prompt = `You are generating wrong answer options for a quiz about ${typeLabel}s.
 Question: "${question}"
 Correct answer: "${correctAnswer}"
-Rules:
+
+STEP 1 — Spell-check: If the correct answer has an obvious spelling mistake, fix it. Otherwise keep it exactly as-is.
+STEP 2 — Generate exactly 3 wrong answers following these rules:
 - ${formatInstruction}
 - Similar era, genre, or style — make them feel like plausible alternatives
-- Do NOT include the correct answer
+- Do NOT include the correct answer (use the corrected spelling if you fixed it)
 - Do NOT number them or explain${musicStyleHint}
-Return ONLY a JSON array of 3 strings. Example: ["Option A", "Option B", "Option C"]`;
+
+Return ONLY a JSON object with this exact format (no markdown, no explanation):
+{"answer":"Correct answer here","wrong":["Option A","Option B","Option C"]}`;
 
   // Check if dev Anthropic override is filled in
   const anthropicKey = document.getElementById("anthropicKey")?.value?.trim();
@@ -2543,9 +2639,12 @@ Return ONLY a JSON array of 3 strings. Example: ["Option A", "Option B", "Option
         })
       });
       const data = await res.json();
-      const text = data.content?.[0]?.text ?? "[]";
+      const text = data.content?.[0]?.text ?? "{}";
       const parsed = JSON.parse(text.replace(/```json|```/g, "").trim());
-      return Array.isArray(parsed) ? parsed.slice(0, 3) : [];
+      return {
+        corrected: parsed.answer ? normalizeAnswer(String(parsed.answer), quizType) : null,
+        wrong: Array.isArray(parsed.wrong) ? parsed.wrong.slice(0, 3).map(a => normalizeAnswer(String(a), quizType)) : []
+      };
     }
 
     // Default: use Gemini
@@ -2569,18 +2668,30 @@ Return ONLY a JSON array of 3 strings. Example: ["Option A", "Option B", "Option
     console.log("Gemini full response:", JSON.stringify(data));
     console.log("Gemini raw text:", raw);
 
-    // Workers AI may return an array directly instead of a JSON string
-    if (Array.isArray(raw)) return raw.slice(0, 3);
+    // Workers AI may return an already-parsed object or array instead of a string
+    if (Array.isArray(raw)) {
+      return { corrected: null, wrong: raw.slice(0, 3).map(a => normalizeAnswer(String(a), quizType)) };
+    }
+    if (raw && typeof raw === "object") {
+      return {
+        corrected: raw.answer ? normalizeAnswer(String(raw.answer), quizType) : null,
+        wrong: Array.isArray(raw.wrong) ? raw.wrong.slice(0, 3).map(a => normalizeAnswer(String(a), quizType)) : []
+      };
+    }
 
-    // Strip any markdown fences and extract the JSON array
-    const jsonMatch = raw.match(/\[[\s\S]*\]/);
-    if (!jsonMatch) throw new Error("No JSON array found in Gemini response");
+    // raw is a string — strip markdown fences and parse
+    const cleaned = String(raw).replace(/```json|```/gi, "").trim();
+    const jsonMatch = cleaned.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) throw new Error("No JSON object found in response");
     const parsed = JSON.parse(jsonMatch[0]);
-    return Array.isArray(parsed) ? parsed.slice(0, 3) : [];
+    return {
+      corrected: parsed.answer ? normalizeAnswer(String(parsed.answer), quizType) : null,
+      wrong: Array.isArray(parsed.wrong) ? parsed.wrong.slice(0, 3).map(a => normalizeAnswer(String(a), quizType)) : []
+    };
   } catch(e) {
     console.error("generateWrongAnswers failed:", e);
     setStatus("error", `AI generation failed: ${e.message}. Check console for details.`);
-    return [];
+    return { corrected: null, wrong: [] };
   }
 }
 
@@ -2862,11 +2973,11 @@ window.loadCSV = async function() {
           const correct = q.options[0];
           labelEl.textContent = `Generating wrong answers… (${i + 1}/${needsGeneration.length})`;
 
-          let generated = [];
+          let result = { corrected: null, wrong: [] };
           let attempts = 0;
           while (attempts < 3) {
-            generated = await generateWrongAnswers(q.question, correct.text);
-            if (generated.length > 0) break;
+            result = await generateWrongAnswers(q.question, correct.text);
+            if (result.wrong.length > 0) break;
             attempts++;
             if (attempts < 3) {
               labelEl.textContent = `Rate limited — retrying in 15s…`;
@@ -2874,7 +2985,12 @@ window.loadCSV = async function() {
             }
           }
 
-          const newOpts = generated.map((text, oi) => ({
+          // Apply AI spell-correction to correct answer if provided
+          if (result.corrected && result.corrected !== correct.text) {
+            correct.text = result.corrected;
+          }
+
+          const newOpts = result.wrong.map((text, oi) => ({
             id: `${q.id}_gen${oi}_${Math.random().toString(36).slice(2,6)}`,
             text, correct: false, aiGenerated: true
           }));
