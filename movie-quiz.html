@@ -664,10 +664,11 @@
   .creator-row {
     display: grid;
     grid-template-columns: 1fr 1fr 1fr;
+    grid-template-rows: auto auto;
     gap: 8px;
     padding: 10px 0;
     border-bottom: 1px solid var(--border);
-    align-items: center;
+    align-items: start;
   }
   .creator-row:last-child { border-bottom: none; }
   .creator-question {
@@ -675,6 +676,20 @@
     color: var(--cream);
     line-height: 1.4;
     padding-right: 8px;
+    padding-top: 8px;
+  }
+  .creator-answer-cell {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+  .creator-answer-row {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+  }
+  .creator-hint-cell {
+    padding-top: 2px;
   }
   .creator-input {
     padding: 8px 11px;
@@ -704,6 +719,61 @@
     text-transform: uppercase;
     color: var(--gold-dim);
   }
+  /* ── ANSWER SUGGESTIONS ── */
+  .suggest-btn {
+    background: none;
+    border: 1px solid var(--surface2);
+    border-radius: 6px;
+    color: var(--muted);
+    cursor: pointer;
+    font-size: 15px;
+    padding: 6px 9px;
+    transition: border-color 0.15s, color 0.15s;
+    white-space: nowrap;
+    flex-shrink: 0;
+    line-height: 1;
+  }
+  .suggest-btn:hover { border-color: var(--gold-dim); color: var(--cream); }
+  .suggest-btn:disabled { opacity: 0.4; cursor: default; }
+
+  .suggest-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    margin-top: 5px;
+  }
+  .suggest-label {
+    width: 100%;
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    font-weight: 600;
+  }
+  .suggest-chip {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    color: var(--cream);
+    cursor: pointer;
+    font-size: 12px;
+    padding: 3px 10px 3px 11px;
+    transition: border-color 0.15s, background 0.15s;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-family: var(--font-body);
+  }
+  .suggest-chip:hover { border-color: var(--gold-dim); }
+  .suggest-chip-x {
+    color: var(--muted);
+    font-size: 12px;
+    line-height: 1;
+    padding: 0 1px;
+    transition: color 0.1s;
+  }
+  .suggest-chip-x:hover { color: var(--cream); }
+
   /* ── MODE TOGGLE ── */
   .mode-toggle {
     display: flex;
@@ -1933,8 +2003,16 @@ function renderCreatorForm() {
   form.innerHTML = questions.map((q, i) => `
     <div class="creator-row">
       <div class="creator-question">${q.q}</div>
-      <input class="creator-input" placeholder="Your answer…" id="ca_${i}" autocomplete="off">
-      <input class="creator-input" placeholder="e.g. Show or film name" id="ch_${i}" autocomplete="off">
+      <div class="creator-answer-cell">
+        <div class="creator-answer-row">
+          <input class="creator-input" placeholder="Your answer…" id="ca_${i}" autocomplete="off" style="flex:1;min-width:0;">
+          <button class="suggest-btn" id="sb_${i}" onclick="fetchSuggestions(${i},'${q.id}')" title="Need inspiration?">💡</button>
+        </div>
+        <div class="suggest-chips" id="sc_${i}"></div>
+      </div>
+      <div class="creator-hint-cell">
+        <input class="creator-input" placeholder="e.g. Show or film name" id="ch_${i}" autocomplete="off">
+      </div>
     </div>
   `).join('');
 
@@ -2277,6 +2355,83 @@ Return ONLY a JSON array of 3 strings. Example: ["Option A", "Option B", "Option
     setStatus("error", `AI generation failed: ${e.message}. Check console for details.`);
     return [];
   }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   ANSWER SUGGESTIONS
+═══════════════════════════════════════════════════════════ */
+async function fetchSuggestions(idx, questionId) {
+  const btn     = document.getElementById(`sb_${idx}`);
+  const chipsEl = document.getElementById(`sc_${idx}`);
+  const inputEl = document.getElementById(`ca_${idx}`);
+  if (!btn || !chipsEl || !inputEl) return;
+
+  const pool = QUESTION_POOLS[quizType] ?? QUESTION_POOLS.movies;
+  const qObj = pool.find(q => q.id === questionId);
+  if (!qObj) return;
+
+  btn.disabled = true;
+  btn.textContent = '⏳';
+  chipsEl.innerHTML = '';
+
+  try {
+    const res = await wfetch(`${WORKER_URL}/suggest`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ question: qObj.q, quizType, questionId })
+    });
+
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    const suggestions = Array.isArray(data.suggestions) ? data.suggestions : [];
+
+    if (!suggestions.length) {
+      btn.textContent = '💡';
+      btn.disabled = false;
+      return;
+    }
+
+    // Label
+    const label = document.createElement('div');
+    label.className = 'suggest-label';
+    label.textContent = 'Ideas to spark inspiration:';
+    chipsEl.appendChild(label);
+
+    suggestions.forEach(text => {
+      const chip = document.createElement('span');
+      chip.className = 'suggest-chip';
+
+      const textNode = document.createTextNode(text);
+      const x = document.createElement('span');
+      x.className = 'suggest-chip-x';
+      x.title = 'Dismiss';
+      x.textContent = '×';
+
+      chip.appendChild(textNode);
+      chip.appendChild(x);
+
+      chip.addEventListener('click', (e) => {
+        if (e.target === x) {
+          chip.remove();
+          // If no chips left (besides label), clear container
+          if (!chipsEl.querySelector('.suggest-chip')) chipsEl.innerHTML = '';
+          return;
+        }
+        // Populate input and clear chips
+        inputEl.value = text;
+        chipsEl.innerHTML = '';
+        inputEl.focus();
+      });
+
+      chipsEl.appendChild(chip);
+    });
+
+  } catch (e) {
+    console.warn('Suggestions failed:', e);
+  }
+
+  btn.textContent = '💡';
+  btn.disabled = false;
 }
 
 /* ═══════════════════════════════════════════════════════════
