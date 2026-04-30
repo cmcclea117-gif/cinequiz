@@ -2366,13 +2366,20 @@ async function fetchSuggestions(idx, questionId) {
   const inputEl = document.getElementById(`ca_${idx}`);
   if (!btn || !chipsEl || !inputEl) return;
 
-  const pool = QUESTION_POOLS[quizType] ?? QUESTION_POOLS.movies;
-  const qObj = pool.find(q => q.id === questionId);
-  if (!qObj) return;
-
+  // Show spinner immediately so any failure is visible
   btn.disabled = true;
   btn.textContent = '⏳';
   chipsEl.innerHTML = '';
+
+  const pool = QUESTION_POOLS[quizType] ?? QUESTION_POOLS.movies;
+  const qObj = pool.find(q => q.id === questionId);
+  if (!qObj) {
+    console.error('fetchSuggestions: question not found in pool', { questionId, quizType });
+    toast('Could not find question — try refreshing the form.');
+    btn.textContent = '💡';
+    btn.disabled = false;
+    return;
+  }
 
   try {
     const res = await wfetch(`${WORKER_URL}/suggest`, {
@@ -2386,6 +2393,7 @@ async function fetchSuggestions(idx, questionId) {
     const suggestions = Array.isArray(data.suggestions) ? data.suggestions : [];
 
     if (!suggestions.length) {
+      toast('No suggestions returned — try again in a moment.');
       btn.textContent = '💡';
       btn.disabled = false;
       return;
