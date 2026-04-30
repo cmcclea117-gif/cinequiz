@@ -663,9 +663,9 @@
   /* ── CREATOR FORM ── */
   .creator-row {
     display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
+    grid-template-columns: 1fr 1fr;
     grid-template-rows: auto auto;
-    gap: 8px;
+    gap: 6px 8px;
     padding: 10px 0;
     border-bottom: 1px solid var(--border);
     align-items: start;
@@ -688,8 +688,10 @@
     gap: 6px;
     align-items: center;
   }
+  /* hint sits on row 2, spanning only the answer column */
   .creator-hint-cell {
-    padding-top: 2px;
+    grid-column: 2;
+    grid-row: 2;
   }
   .creator-input {
     padding: 8px 11px;
@@ -706,7 +708,7 @@
   .creator-input::placeholder { color: var(--muted); }
   .creator-header {
     display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
+    grid-template-columns: 1fr 1fr;
     gap: 8px;
     padding-bottom: 8px;
     margin-bottom: 4px;
@@ -1042,7 +1044,7 @@
       <!-- Quiz Type -->
       <div style="margin-bottom:14px;">
         <div style="font-size:11px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin-bottom:8px;">Quiz Type</div>
-        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:8px;">
           <button onclick="setQuizType('movies');renderCreatorForm()" id="ctypeMovies" class="primary">🎬 Movies</button>
           <button onclick="setQuizType('tv');renderCreatorForm()" id="ctypeTV">📺 TV Shows</button>
           <button onclick="setQuizType('games');renderCreatorForm()" id="ctypeGames">🎮 Video Games</button>
@@ -1070,7 +1072,6 @@
       <div class="creator-header">
         <span>Question</span>
         <span>Your Answer</span>
-        <span>Search Hint (optional)</span>
       </div>
       <div id="creatorForm"></div>
 
@@ -1133,7 +1134,7 @@
     <!-- Step 1: Quiz Type -->
     <div style="margin-bottom:14px;">
       <div style="font-size:11px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin-bottom:8px;">Step 1 — Quiz Type</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:8px;">
         <button onclick="setQuizType('movies')" id="typeMovies" class="primary">🎬 Movies</button>
         <button onclick="setQuizType('tv')" id="typeTV">📺 TV Shows</button>
         <button onclick="setQuizType('games')" id="typeGames">🎮 Video Games</button>
@@ -2011,7 +2012,7 @@ function renderCreatorForm() {
         <div class="suggest-chips" id="sc_${i}"></div>
       </div>
       <div class="creator-hint-cell">
-        <input class="creator-input" placeholder="e.g. Show or film name" id="ch_${i}" autocomplete="off">
+        <input class="creator-input" placeholder="Search hint (optional)" id="ch_${i}" autocomplete="off">
       </div>
     </div>
   `).join('');
