@@ -2270,6 +2270,26 @@ function getNextQuestions(type) {
 }
 
 /* ═══════════════════════════════════════════════════════════
+   QUESTION PERSONALIZATION
+   Transforms "my/I" phrasing to "[Name]'s/[Name]" for quiz takers
+═══════════════════════════════════════════════════════════ */
+function personalizeQuestion(text, name) {
+  if (!name) return text;
+  const n = name.trim();
+  return text
+    .replace(/do I/g,      `does ${n}`)
+    .replace(/would I/g,   `would ${n}`)
+    .replace(/did I/g,     `did ${n}`)
+    .replace(/am I/g,      `is ${n}`)
+    .replace(/I think/g,   `${n} thinks`)
+    .replace(/I consider/g,`${n} considers`)
+    .replace(/I relate/g,  `${n} relates`)
+    .replace(/I wish/g,    `${n} wishes`)
+    .replace(/my/g,        `${n}'s`)
+    .replace(/I/g,         n);
+}
+
+/* ═══════════════════════════════════════════════════════════
    CREATOR FORM
 ═══════════════════════════════════════════════════════════ */
 function renderCreatorForm() {
@@ -3296,13 +3316,12 @@ window.loadFromURL = async function() {
       questions = raw.questions ?? [];
       creatorName = raw.creatorName ?? null;
     }
-    // Restore taste profile if present
-    if (raw.tasteProfile) quizData.tasteProfile = raw.tasteProfile;
 
     if (!questions.length) throw new Error("Invalid quiz format");
 
     quizData = questions;
     quizData.creatorName = creatorName;
+    if (!Array.isArray(raw) && raw.tasteProfile) quizData.tasteProfile = raw.tasteProfile;
 
     // Track play count silently — fire and forget
     const quizUrlParam = document.getElementById("jsonUrlInput")?.value?.trim();
@@ -3414,14 +3433,19 @@ function renderQuiz() {
   }
   restoredBanner.style.display = hasSaved ? "block" : "none";
 
+  // Personalize question text for takers of shared quizzes
+  const isSharedView = !!new URLSearchParams(window.location.search).get("quiz");
+  const takerName = isSharedView ? quizData.creatorName : null;
+
   quizData.forEach((q, i) => {
     const div = document.createElement("div");
     div.className = "question";
     div.dataset.index = i;
+    const questionText = takerName ? personalizeQuestion(q.question, takerName) : q.question;
 
     let html = `
       <div class="question-number">Question ${i + 1}</div>
-      <div class="question-text">${q.question}</div>
+      <div class="question-text">${questionText}</div>
       <div class="options-grid">
     `;
 
