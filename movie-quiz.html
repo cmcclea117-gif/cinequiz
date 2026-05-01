@@ -700,12 +700,12 @@
     border-radius: 6px;
     color: var(--cream);
     font-family: var(--font-body);
-    font-size: 13px;
+    font-size: 16px; /* 16px prevents iOS Safari auto-zoom on focus */
     outline: none;
     width: 100%;
   }
   .creator-input:focus { border-color: var(--gold-dim); }
-  .creator-input::placeholder { color: var(--muted); }
+  .creator-input::placeholder { color: var(--muted); font-size: 12px; }
   .creator-header {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -775,6 +775,56 @@
     transition: color 0.1s;
   }
   .suggest-chip-x:hover { color: var(--cream); }
+
+  /* ── TASTE PROFILE ── */
+  .taste-profile-btn {
+    background: none;
+    border: 1px solid var(--gold-dim);
+    border-radius: 6px;
+    color: var(--gold-dim);
+    cursor: pointer;
+    font-family: var(--font-body);
+    font-size: 12px;
+    font-weight: 500;
+    padding: 7px 14px;
+    transition: border-color 0.15s, color 0.15s;
+    width: 100%;
+    margin-top: 4px;
+  }
+  .taste-profile-btn:hover { border-color: var(--gold); color: var(--gold); }
+  .taste-profile-btn:disabled { opacity: 0.4; cursor: default; }
+  .taste-profile-card {
+    display: none;
+    margin-top: 12px;
+    padding: 14px 16px;
+    background: var(--surface2);
+    border: 1px solid var(--gold-dim);
+    border-radius: 10px;
+    text-align: left;
+  }
+  .taste-profile-card.visible { display: block; }
+  .taste-profile-eyebrow {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 8px;
+  }
+  .taste-profile-text {
+    font-family: var(--font-display);
+    font-size: 1.4rem;
+    font-style: italic;
+    color: var(--cream);
+    line-height: 1.3;
+    font-weight: 400;
+    margin-bottom: 2px;
+  }
+  .taste-profile-share {
+    margin-top: 10px;
+    font-size: 11px;
+    color: var(--muted);
+  }
 
   /* ── QUIZ READY OVERLAY ── */
   .quiz-ready-overlay {
@@ -1474,6 +1524,12 @@
       <button class="share-overlay-social-btn twitter" style="flex:1;" onclick="quizReadySocial('twitter')">𝕏 Post</button>
       <button class="share-overlay-social-btn whatsapp" style="flex:1;" onclick="quizReadySocial('whatsapp')">💬 WhatsApp</button>
     </div>
+    <button class="taste-profile-btn" id="tasteProfileBtn" onclick="generateTasteProfile()">✨ See your taste profile</button>
+    <div class="taste-profile-card" id="tasteProfileCard">
+      <div class="taste-profile-eyebrow">Your taste persona</div>
+      <div class="taste-profile-text" id="tasteProfileText"></div>
+      <div class="taste-profile-share" id="tasteProfileShare"></div>
+    </div>
     <button class="quiz-ready-dismiss" onclick="closeQuizReadyOverlay()">Preview my quiz ↓</button>
   </div>
 </div>
@@ -1490,6 +1546,10 @@
         <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="3" r="1.5"/><circle cx="4" cy="8" r="1.5"/><circle cx="12" cy="13" r="1.5"/><path d="M5.5 9l5 3M10.5 4.5l-5 3"/></svg>
         Share Results
       </button>
+      <div class="share-overlay-link-row" id="shareOverlayLinkRow" style="display:none;gap:8px;margin-bottom:2px;">
+        <input class="quiz-ready-link-input" id="shareOverlayLinkInput" readonly style="font-size:12px;">
+        <button onclick="shareOverlayCopyLink()" style="white-space:nowrap;">Copy</button>
+      </div>
       <div class="share-overlay-copied" id="shareOverlayCopied"></div>
       <div class="share-overlay-social" id="shareOverlaySocial" style="display:none;">
         <button class="share-overlay-social-btn twitter" onclick="shareOverlaySocial('twitter')">
@@ -2231,13 +2291,13 @@ function renderCreatorForm() {
       <div class="creator-question">${q.q}</div>
       <div class="creator-answer-cell">
         <div class="creator-answer-row">
-          <input class="creator-input" placeholder="Your answer…" id="ca_${i}" autocomplete="off" style="flex:1;min-width:0;">
+          <input class="creator-input" placeholder="Answer…" id="ca_${i}" autocomplete="off" style="flex:1;min-width:0;">
           <button class="suggest-btn" id="sb_${i}" onclick="fetchSuggestions(${i},'${q.id}')" title="Need inspiration?">💡</button>
         </div>
         <div class="suggest-chips" id="sc_${i}"></div>
       </div>
       <div class="creator-hint-cell">
-        <input class="creator-input" placeholder="Search hint (optional)" id="ch_${i}" autocomplete="off">
+        <input class="creator-input" placeholder="Hint (optional)" id="ch_${i}" autocomplete="off">
       </div>
     </div>
   `).join('');
@@ -2388,55 +2448,91 @@ window.buildFromCreator = async function() {
   enrichEl.style.display = "block";
   setStatus("loading", `Building quiz from ${base.length} answer(s)…`);
 
-  // Step 1: Generate wrong answers sequentially with delay to avoid rate limiting
+  // Step 1: Generate wrong answers in batches of BATCH_SIZE
   labelEl.textContent = `Generating wrong answers for ${base.length} question(s)…`;
   fillEl.style.width = "5%";
+  overlayStep.textContent = "Step 1 of 2 — AI generation";
 
-  for (let i = 0; i < base.length; i++) {
-    const q = base[i];
-    const correct = q.options[0];
-    labelEl.textContent = `Generating wrong answers… (${i + 1}/${base.length})`;
-    overlayLbl.textContent = `Generating wrong answers… (${i + 1}/${base.length})`;
-    overlayStep.textContent = "Step 1 of 2 — AI is thinking";
+  let processedCount = 0;
+  for (let batchStart = 0; batchStart < base.length; batchStart += BATCH_SIZE) {
+    const batchEnd = Math.min(batchStart + BATCH_SIZE, base.length);
+    const batchItems = base.slice(batchStart, batchEnd);
+    const batchNum = Math.floor(batchStart / BATCH_SIZE) + 1;
+    const totalBatches = Math.ceil(base.length / BATCH_SIZE);
 
-    let result = { corrected: null, wrong: [] };
-    let attempts = 0;
-    while (attempts < 3) {
-      result = await generateWrongAnswers(q.question, correct.text, correct.searchHint);
-      if (result.wrong.length > 0) break;
-      attempts++;
-      if (attempts < 3) {
-        labelEl.textContent = `Rate limited — retrying ${i + 1}/${base.length} in 15s…`;
-        overlayLbl.textContent = `Rate limited — retrying in 15s…`;
-        overlayStep.textContent = "Waiting for AI…";
-        await new Promise(r => setTimeout(r, 15000));
+    const genMessages = [
+      "Cooking up convincing fakes…",
+      "Making the wrong answers feel right…",
+      "Teaching the AI to be sneaky…",
+      "Crafting plausible distractors…",
+      "Adding a little misdirection…",
+    ];
+    const msg = genMessages[(batchNum - 1) % genMessages.length];
+    labelEl.textContent = msg;
+    overlayLbl.textContent = msg;
+    overlayStep.textContent = `Step 1 of 2 — ${processedCount} of ${base.length} questions done`;
+
+    // Try batch generation first
+    const batchInputs = batchItems.map(q => ({
+      question: q.question,
+      correctAnswer: q.options[0].text,
+      searchHint: q.options[0].searchHint
+    }));
+
+    let batchResults = await generateWrongAnswersBatch(batchInputs);
+
+    // Fall back to individual calls if batch failed
+    if (!batchResults) {
+      batchResults = [];
+      for (let j = 0; j < batchItems.length; j++) {
+        const q = batchItems[j];
+        const correct = q.options[0];
+        let result = { corrected: null, wrong: [] };
+        let attempts = 0;
+        while (attempts < 3) {
+          result = await generateWrongAnswers(q.question, correct.text, correct.searchHint);
+          if (result.wrong.length > 0) break;
+          attempts++;
+          if (attempts < 3) {
+            overlayLbl.textContent = `Rate limited — retrying in 15s…`;
+            await new Promise(r => setTimeout(r, 15000));
+          }
+        }
+        batchResults.push(result);
+        if (j < batchItems.length - 1) await new Promise(r => setTimeout(r, 1000));
       }
     }
 
-    // Apply AI spell-correction to the correct answer if provided
-    if (result.corrected && result.corrected !== correct.text) {
-      correct.text = result.corrected;
-      // Update the input so the creator sees the corrected spelling
-      const inputEl = document.getElementById(`ca_${i}`);
-      if (inputEl) inputEl.value = result.corrected;
+    // Apply results to each question in the batch
+    for (let j = 0; j < batchItems.length; j++) {
+      const q = batchItems[j];
+      const correct = q.options[0];
+      const result = batchResults[j] ?? { corrected: null, wrong: [] };
+      const globalIdx = batchStart + j;
+
+      if (result.corrected && result.corrected !== correct.text) {
+        correct.text = result.corrected;
+        const inputEl = document.getElementById(`ca_${globalIdx}`);
+        if (inputEl) inputEl.value = result.corrected;
+      }
+
+      const newOpts = result.wrong.map((text, oi) => ({
+        id: `${q.id}_gen${oi}_${Math.random().toString(36).slice(2,6)}`,
+        text,
+        correct: false,
+        aiGenerated: true,
+        searchHint: (quizType === 'music' && correct.searchHint) ? text : null
+      }));
+      q.options = [correct, ...newOpts];
+      processedCount++;
     }
 
-    // For music with a search hint, give wrong answers the same hint format
-    // so they also get "Known for:" labels during enrichment
-    const newOpts = result.wrong.map((text, oi) => ({
-      id: `${q.id}_gen${oi}_${Math.random().toString(36).slice(2,6)}`,
-      text,
-      correct: false,
-      aiGenerated: true,
-      // Pass artistHint so wrong answers also search by artist and show "Known for:"
-      searchHint: (quizType === 'music' && correct.searchHint) ? text : null
-    }));
-    q.options = [correct, ...newOpts];
-    const aiPct = `${5 + Math.round(((i + 1) / base.length) * 40)}%`;
+    const aiPct = `${5 + Math.round((processedCount / base.length) * 40)}%`;
     fillEl.style.width = aiPct;
     overlayFill.style.width = aiPct;
 
-    if (i < base.length - 1) await new Promise(r => setTimeout(r, 2500));
+    // Small delay between batches
+    if (batchEnd < base.length) await new Promise(r => setTimeout(r, 1000));
   }
 
   // Step 2: image enrichment
@@ -2568,6 +2664,122 @@ function convertCSVToQuiz(raw) {
 /* ═══════════════════════════════════════════════════════════
    AI WRONG ANSWER GENERATION
 ═══════════════════════════════════════════════════════════ */
+
+// Returns the per-question format instruction string based on question text + answer
+function getFormatInstruction(question, correctAnswer, correctSearchHint) {
+  const typeLabel = quizType === 'tv' ? 'TV show'
+    : quizType === 'games'      ? 'video game'
+    : quizType === 'music'      ? 'music artist, album, or song'
+    : quizType === 'books'      ? 'book or author'
+    : quizType === 'boardgames' ? 'board game'
+    : 'movie';
+  const isMusic  = quizType === 'music';
+  const isBooks  = quizType === 'books';
+  const isGenre  = isMusic && /genre/i.test(question);
+  const hasActorFormat = !isMusic && /\(([^)]+)\)/.test(correctAnswer);
+  const musicArtistContext = isMusic && correctSearchHint
+    ? `The correct answer is associated with the artist "${correctSearchHint}". Generate wrong answers from artists with a SIMILAR sound or genre — do NOT use actors, TV characters, or unrelated names.`
+    : "";
+
+  if (isGenre)
+    return `The correct answer is a music genre. Generate 3 other real music genres as wrong answers. Do NOT generate artist names, album titles, song titles, or any other non-genre answers.`;
+  if (hasActorFormat)
+    return `IMPORTANT: The correct answer uses the format "Character Name (Actor Name)". Return all 3 wrong answers in the exact same format — e.g. "Walter White (Bryan Cranston)". Pick characters from DIFFERENT shows.`;
+  if (isMusic)
+    return `Generate 3 real ${typeLabel}s as wrong answers. ${musicArtistContext} Match the same TYPE as the correct answer — if it's an album title, give album titles; if it's an artist name, give artist names; if it's a song title, give song titles. Do NOT mix types.`;
+  if (isBooks)
+    return `Generate 3 real books or authors as wrong answers. Match the same TYPE — if it's a book title, give book titles; if it's an author name, give author names. Pick similar genre, era, or style. Do NOT invent fake titles or authors.`;
+  return `Only use real, actually existing ${typeLabel}s. Do NOT invent fake titles. Pick from different franchises or creators.`;
+}
+
+const BATCH_SIZE = 5;
+
+// Batch version: takes array of {question, correctAnswer, searchHint}, returns array of {corrected, wrong}
+async function generateWrongAnswersBatch(items) {
+  const typeLabel = quizType === 'tv' ? 'TV show'
+    : quizType === 'games'      ? 'video game'
+    : quizType === 'music'      ? 'music artist, album, or song'
+    : quizType === 'books'      ? 'book or author'
+    : quizType === 'boardgames' ? 'board game'
+    : 'movie';
+
+  const questionLines = items.map((item, i) => {
+    const fmt = getFormatInstruction(item.question, item.correctAnswer, item.searchHint);
+    return `${i + 1}. Question: "${item.question}" | Correct: "${item.correctAnswer}" | Rules: ${fmt}`;
+  }).join('\n');
+
+  const prompt = `You are generating wrong answer options for a quiz about ${typeLabel}s.
+
+For EACH question below:
+- STEP 1: Spell-check the correct answer. Fix obvious mistakes, otherwise keep exactly as-is.
+- STEP 2: Generate exactly 3 wrong answers that are similar era/style/genre but NOT the correct answer.
+- Similar era, genre, or style — make them feel like plausible alternatives.
+- Do NOT invent fake titles or names.
+
+Questions:
+${questionLines}
+
+Return ONLY a JSON array with exactly ${items.length} objects in order, one per question:
+[{"answer":"Corrected answer","wrong":["A","B","C"]},...]
+No markdown, no explanation, just the JSON array.`;
+
+  const anthropicKey = document.getElementById("anthropicKey")?.value?.trim();
+
+  try {
+    let rawText = "";
+
+    if (anthropicKey) {
+      const res = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-api-key": anthropicKey,
+          "anthropic-version": "2023-06-01",
+          "anthropic-dangerous-direct-browser-access": "true"
+        },
+        body: JSON.stringify({
+          model: "claude-sonnet-4-20250514",
+          max_tokens: 1000,
+          messages: [{ role: "user", content: prompt }]
+        })
+      });
+      const data = await res.json();
+      rawText = data.content?.[0]?.text ?? "[]";
+    } else {
+      const res = await wfetch(GEMINI_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: prompt }] }],
+          generationConfig: { maxOutputTokens: 1000, temperature: 0.7 }
+        })
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      const raw = data.candidates?.[0]?.content?.parts?.[0]?.text ?? "";
+      rawText = typeof raw === "string" ? raw : JSON.stringify(raw);
+    }
+
+    const cleaned = rawText.replace(/```json|```/gi, "").trim();
+    const match = cleaned.match(/\[[\s\S]*\]/);
+    if (!match) throw new Error("No JSON array in batch response");
+    const parsed = JSON.parse(match[0]);
+
+    if (!Array.isArray(parsed) || parsed.length !== items.length) {
+      throw new Error(`Expected ${items.length} results, got ${parsed.length ?? "non-array"}`);
+    }
+
+    return parsed.map(p => ({
+      corrected: p.answer ? normalizeAnswer(String(p.answer), quizType) : null,
+      wrong: Array.isArray(p.wrong) ? p.wrong.slice(0, 3).map(a => normalizeAnswer(String(a), quizType)) : []
+    }));
+
+  } catch(e) {
+    console.warn("Batch generation failed, will fall back to individual calls:", e.message);
+    return null; // null signals caller to fall back
+  }
+}
+
 async function generateWrongAnswers(question, correctAnswer, correctSearchHint = null) {
   const typeLabel = quizType === 'tv' ? 'TV show'
     : quizType === 'games'      ? 'video game'
@@ -3084,6 +3296,8 @@ window.loadFromURL = async function() {
       questions = raw.questions ?? [];
       creatorName = raw.creatorName ?? null;
     }
+    // Restore taste profile if present
+    if (raw.tasteProfile) quizData.tasteProfile = raw.tasteProfile;
 
     if (!questions.length) throw new Error("Invalid quiz format");
 
@@ -3175,10 +3389,11 @@ function renderQuiz() {
     document.getElementById("quizArea").prepend(nameBanner);
   }
   if (name) {
-    nameBanner.innerHTML = `
-      <div style="font-size:11px;letter-spacing:0.15em;text-transform:uppercase;color:var(--gold-dim);font-weight:600;margin-bottom:4px;">You're taking</div>
-      <div style="font-family:var(--font-display);font-size:1.4rem;font-style:italic;color:var(--cream);">How well do you know <span style="color:var(--gold);">${name}</span>?</div>
-    `;
+    nameBanner.innerHTML = '<div style="font-size:11px;letter-spacing:0.15em;text-transform:uppercase;color:var(--gold-dim);font-weight:600;margin-bottom:4px;">You\'re taking</div>'
+      + '<div style="font-family:var(--font-display);font-size:1.4rem;font-style:italic;color:var(--cream);">How well do you know <span style="color:var(--gold);">' + name + '</span>?</div>'
+      + (quizData.tasteProfile
+        ? '<div style="margin-top:10px;"><span style="font-size:10px;font-weight:600;letter-spacing:0.15em;text-transform:uppercase;color:var(--gold-dim);">Taste Persona</span><div style="font-family:var(--font-display);font-size:1.1rem;font-style:italic;color:var(--cream);margin-top:2px;">' + quizData.tasteProfile + '</div></div>'
+        : "");
     nameBanner.style.display = "block";
   } else {
     nameBanner.style.display = "none";
@@ -3342,6 +3557,11 @@ async function showQuizReadyOverlay() {
   document.getElementById("quizReadyCopied").textContent = "";
   document.getElementById("quizReadyCopyBtn").disabled = true;
   document.getElementById("quizReadySocial").style.display = "none";
+  document.getElementById("tasteProfileBtn").disabled = false;
+  document.getElementById("tasteProfileBtn").textContent = "✨ See your taste profile";
+  document.getElementById("tasteProfileCard").classList.remove("visible");
+  document.getElementById("tasteProfileText").textContent = "";
+  document.getElementById("tasteProfileShare").textContent = "";
 
   // Hide theme toggle
   document.getElementById("themeBtn").style.display = "none";
@@ -3361,7 +3581,9 @@ async function showQuizReadyOverlay() {
 
     if (!res.ok) throw new Error(`Publish failed: ${res.status}`);
     const gist = await res.json();
-    const rawUrl = gist.files["quiz.json"].raw_url;
+    _currentGistId = gist.id;
+    // Use persistent URL (no SHA) so PATCH updates are always served
+    const rawUrl = `https://gist.githubusercontent.com/${gist.owner.login}/${gist.id}/raw/quiz.json`;
 
     // Update jsonUrlInput so rest of app knows the URL
     document.getElementById("jsonUrlInput").value = rawUrl;
@@ -3442,6 +3664,87 @@ window.quizReadySocial = function(platform) {
   window.open(urls[platform], "_blank", "noopener,noreferrer");
 };
 
+window.generateTasteProfile = async function() {
+  const btn = document.getElementById("tasteProfileBtn");
+  btn.disabled = true;
+  btn.textContent = "Generating…";
+
+  const typeContext = {
+    movies:     { label: "movies and cinema",  voice: "cinephile",     lens: "cinematography, directors, storytelling, and cultural impact" },
+    tv:         { label: "TV shows",            voice: "TV enthusiast", lens: "storytelling, character arcs, writing, and cultural moments" },
+    games:      { label: "video games",         voice: "gamer",         lens: "gameplay, narrative, world-building, and design" },
+    music:      { label: "music",               voice: "music lover",   lens: "artists, albums, sound, and emotional resonance" },
+    books:      { label: "books and literature",voice: "reader",        lens: "prose, themes, characters, and ideas" },
+    boardgames: { label: "board games",         voice: "tabletop gamer",lens: "mechanics, strategy, theme, and social dynamics" }
+  };
+  const ctx = typeContext[quizType] ?? typeContext.movies;
+  const name = quizData.creatorName;
+
+  // Build Q+A summary for the prompt
+  const qa = quizData.map(q => "Q: " + q.question + "\nA: " + (q.options.find(o => o.correct)?.text ?? "-")).join("\n\n");
+
+  const nameIntro = name ? "Their name is " + name + "." : "";
+  const prompt = "You are a personality analyst creating a short taste persona for someone based on their " + ctx.label + " preferences.\n\n"
+    + (nameIntro ? nameIntro + "\n" : "")
+    + "They answered these questions about their " + ctx.label + ":\n\n"
+    + qa + "\n\n"
+    + "Based on their answers, give them a persona — a 2 to 4 word title that captures their taste personality as a " + ctx.voice + ". Examples of the style: \"The Reluctant Idealist\", \"The Haunted Romantic\", \"The Quiet Subversive\", \"The Comfort Seeker\", \"The Genre Purist\". Be specific to their actual answers — not generic. Return ONLY the persona title, nothing else. No explanation, no quotes, no punctuation.";
+
+  try {
+    const res = await wfetch(GEMINI_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: prompt }] }],
+        generationConfig: { maxOutputTokens: 300, temperature: 0.9 }
+      })
+    });
+
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    const raw = data.candidates?.[0]?.content?.parts?.[0]?.text ?? "";
+    const assessment = (typeof raw === "string" ? raw : JSON.stringify(raw)).trim();
+
+    if (!assessment) throw new Error("Empty response");
+
+    // Clean up — strip any quotes the model might add despite instructions
+    const persona = assessment.replace(/^["\u201c\u2018]+|["\u201d\u2019]+$/g, "").trim();
+    document.getElementById("tasteProfileText").textContent = persona;
+
+    // Save to quizData so it gets included in the Gist
+    quizData.tasteProfile = persona;
+
+    // PATCH the existing Gist with the tasteProfile included
+    if (_currentGistId) {
+      try {
+        await wfetch(`${GIST_URL}/${_currentGistId}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json", "Accept": "application/vnd.github+json" },
+          body: JSON.stringify({
+            description: `CineQuiz${name ? ` — ${name}` : ""}`,
+            files: { "quiz.json": { content: JSON.stringify({
+              creatorName: name || null,
+              quizType,
+              tasteProfile: persona,
+              questions: [...quizData]
+            }, null, 2) } }
+          })
+        });
+      } catch(e) { console.warn("Gist PATCH failed:", e.message); /* profile still shows locally */ }
+    }
+
+    document.getElementById("tasteProfileCard").classList.add("visible");
+    document.getElementById("tasteProfileShare").textContent = "Your friends will see this before taking your quiz.";
+
+    btn.textContent = "✨ Taste profile ready";
+
+  } catch(e) {
+    btn.disabled = false;
+    btn.textContent = "✨ See your taste profile";
+    toast(`Profile generation failed: ${e.message}`);
+  }
+};
+
 function closeQuizReadyOverlay() {
   document.getElementById("quizReadyOverlay").classList.remove("visible");
   document.getElementById("themeBtn").style.display = "";
@@ -3453,6 +3756,7 @@ function closeQuizReadyOverlay() {
 ═══════════════════════════════════════════════════════════ */
 let _shareOverlayLink = null;
 let _quizShortUrl = null; // short link for the quiz (spoiler-free)
+let _currentGistId = null;  // ID of the published quiz Gist (for PATCH updates)
 
 function showShareOverlay(score, total) {
   const pct = Math.round((score / total) * 100);
@@ -3469,6 +3773,8 @@ function showShareOverlay(score, total) {
   document.getElementById("shareOverlayBtn").innerHTML = `<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="3" r="1.5"/><circle cx="4" cy="8" r="1.5"/><circle cx="12" cy="13" r="1.5"/><path d="M5.5 9l5 3M10.5 4.5l-5 3"/></svg> Share Results`;
   document.getElementById("shareOverlayCopied").textContent = "";
   document.getElementById("shareOverlaySocial").style.display = "none";
+  document.getElementById("shareOverlayLinkRow").style.display = "none";
+  document.getElementById("shareOverlayLinkInput").value = "";
   _shareOverlayLink = null;
   // keep _quizShortUrl — it was set at publish time and is still valid
   document.getElementById("shareOverlay").classList.add("visible");
@@ -3566,16 +3872,20 @@ window.shareOverlayShare = async function() {
       } catch(e) { /* silent */ }
     }
 
-    // Update results link output
+    // Update results link output (below overlay)
     document.getElementById("resultsShareLink").value = _shareOverlayLink;
     document.getElementById("resultsLinkOutput").style.display = "block";
 
-    // Auto-copy to clipboard
+    // Show link inside overlay with Copy button (iOS Safari blocks async clipboard)
+    document.getElementById("shareOverlayLinkInput").value = _shareOverlayLink;
+    document.getElementById("shareOverlayLinkRow").style.display = "flex";
+
+    // Try auto-copy — works on desktop/Android; silently skipped on iOS
     try {
       await navigator.clipboard.writeText(_shareOverlayLink);
       document.getElementById("shareOverlayCopied").textContent = "✓ Link copied to clipboard!";
     } catch(e) {
-      document.getElementById("shareOverlayCopied").textContent = "Link ready — copy it below";
+      document.getElementById("shareOverlayCopied").textContent = "Tap Copy to share the link";
     }
 
     btn.textContent = "✓ Shared!";
@@ -3766,6 +4076,22 @@ window.shareResults = async function() {
     toast(`Share failed: ${e.message}`);
     btn.disabled = false;
     btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="3" r="1.5"/><circle cx="4" cy="8" r="1.5"/><circle cx="12" cy="13" r="1.5"/><path d="M5.5 9l5 3M10.5 4.5l-5 3"/></svg> Share Results`;
+  }
+};
+
+window.shareOverlayCopyLink = function() {
+  const input = document.getElementById("shareOverlayLinkInput");
+  if (!input?.value) return;
+  // Select + execCommand works reliably on iOS Safari
+  input.select();
+  input.setSelectionRange(0, 99999);
+  try {
+    document.execCommand("copy");
+    document.getElementById("shareOverlayCopied").textContent = "✓ Link copied!";
+  } catch(e) {
+    navigator.clipboard.writeText(input.value).then(() => {
+      document.getElementById("shareOverlayCopied").textContent = "✓ Link copied!";
+    });
   }
 };
 
