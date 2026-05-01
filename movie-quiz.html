@@ -3408,11 +3408,9 @@ function renderQuiz() {
     document.getElementById("quizArea").prepend(nameBanner);
   }
   if (name) {
+    const persona = quizData.tasteProfile ? ", " + quizData.tasteProfile : "";
     nameBanner.innerHTML = '<div style="font-size:11px;letter-spacing:0.15em;text-transform:uppercase;color:var(--gold-dim);font-weight:600;margin-bottom:4px;">You\'re taking</div>'
-      + '<div style="font-family:var(--font-display);font-size:1.4rem;font-style:italic;color:var(--cream);">How well do you know <span style="color:var(--gold);">' + name + '</span>?</div>'
-      + (quizData.tasteProfile
-        ? '<div style="margin-top:10px;"><span style="font-size:10px;font-weight:600;letter-spacing:0.15em;text-transform:uppercase;color:var(--gold-dim);">Taste Persona</span><div style="font-family:var(--font-display);font-size:1.1rem;font-style:italic;color:var(--cream);margin-top:2px;">' + quizData.tasteProfile + '</div></div>'
-        : "");
+      + '<div style="font-family:var(--font-display);font-size:1.4rem;font-style:italic;color:var(--cream);">How well do you know <span style="color:var(--gold);">' + name + persona + '</span>?</div>';
     nameBanner.style.display = "block";
   } else {
     nameBanner.style.display = "none";
@@ -3434,7 +3432,9 @@ function renderQuiz() {
   restoredBanner.style.display = hasSaved ? "block" : "none";
 
   // Personalize question text for takers of shared quizzes
-  const isSharedView = !!new URLSearchParams(window.location.search).get("quiz");
+  // Apply if quiz was loaded via ?quiz= param OR direct URL load (not creator previewing)
+  const params = new URLSearchParams(window.location.search);
+  const isSharedView = !!(params.get("quiz") || (quizData.creatorName && !params.get("token")));
   const takerName = isSharedView ? quizData.creatorName : null;
 
   quizData.forEach((q, i) => {
