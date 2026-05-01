@@ -1,24 +1,38 @@
-feat: taste persona, batched AI generation, UX polish
+feat: taste persona, question personalization, contact page, comments, UX fixes
 
 worker.js
-- Add PATCH /gist/:id support for updating existing Gists
-- Add answer-type detection to /suggest: director/actor/character/
-  author/artist/album/song/developer/showrunner questions now get
-  correctly typed suggestions instead of defaulting to titles
+- Add PATCH /gist/:id for updating existing Gists (taste profile saves)
+- Add PATCH to CORS Access-Control-Allow-Methods
+- Add /comments GET (paginated, newest first), POST (anonymous, KV stored,
+  1yr TTL), DELETE /comments/:id (protected by APPROVE_SECRET)
+- Add answer-type detection to /suggest: director/actor/character/author/
+  artist/album/song/developer/showrunner questions get correctly typed
+  suggestions instead of defaulting to category titles
 
 movie-quiz.html
-- Taste persona: "See your taste profile" button in Quiz Ready overlay
-  generates a 2-4 word Myers-Briggs-style persona (e.g. "The Emotive
-  Thrill Seeker") using type-aware AI prompt; PATCHes existing Gist so
-  quiz takers see it above the questions; styled as display-font title
-- Batch AI generation: wrong answers now generated in batches of 5
-  (~16s for 20 questions vs ~60s before); falls back to individual
-  calls if batch parse fails; fun rotating messages replace "batch X/Y"
-- Taste persona on shared quiz: shown above questions with "TASTE
-  PERSONA" eyebrow label; loaded from Gist tasteProfile field
-- Short link + persistent Gist URL: store _currentGistId on publish,
-  use SHA-less raw URL so PATCH updates are served without link changes
-- iOS zoom fix: creator inputs set to font-size 16px; placeholder
-  text 12px to fit narrow column; placeholders shortened to "Answer…"
-  and "Hint (optional)"
-- Persona display: styled in display font italic, strips AI-added quotes
+- Taste persona: AI generates 2-4 word Myers-Briggs-style title in Quiz
+  Ready overlay; PATCHes existing Gist so takers see it; merged into
+  "How well do you know Bilbo, the Epic Fantasy Enthusiast?" headline
+- Persona echo guard: detects if persona echoes a correct answer and
+  replaces with abstract noun (Connoisseur, Aficionado, etc.)
+- Question personalization: questions rewritten for takers using creator
+  name ("my" -> "[Name]'s", "do I" -> "does [Name]" etc.); uses
+  _loadedFromURL flag so creator preview is unaffected
+- Persistent Gist URL: use SHA-less raw URL so PATCH updates are served
+  without changing the share link; store _currentGistId for PATCH calls
+- Fix tasteProfile ordering: was set before quizData = questions,
+  now set immediately after so it isn't discarded
+- Batch loading messages: replace "batch X/Y" with rotating fun messages
+  ("Cooking up convincing fakes…" etc.) + "X of 20 questions done"
+- iOS zoom fix: creator inputs 16px; placeholder 12px; shortened to
+  "Answer…" and "Hint (optional)"
+- Footer: add Contact & Feedback link
+
+contact.html (new file)
+- Standalone page matching CineQuiz design tokens (dark/light, fonts)
+- Get in Touch card with Email Us button (mailto:cj@tuekssietch.fun)
+- Anonymous discussion section: fun auto-generated usernames
+  (CuriousArchivist847 style), shuffle button, 1000 char limit,
+  character counter, newest-first display with time-ago labels,
+  avatar initials, Load More pagination
+- Comments POST to /comments worker route, no login required

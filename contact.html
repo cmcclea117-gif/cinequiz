@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CineQuiz — Contact & Feedback</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,300&display=swap" rel="stylesheet">
+
+<style>
+  :root {
+    --bg:       #0d0d0f;
+    --surface:  #16161a;
+    --surface2: #1f1f26;
+    --border:   #2a2a35;
+    --gold:     #c9a84c;
+    --gold-dim: #7a6228;
+    --cream:    #f0e8d4;
+    --muted:    #6b6b80;
+    --radius:   10px;
+    --font-display: 'DM Serif Display', Georgia, serif;
+    --font-body:    'DM Sans', sans-serif;
+  }
+
+  body.light {
+    --bg:       #f5f0e8;
+    --surface:  #fdfaf4;
+    --surface2: #f0ebe0;
+    --border:   #ddd5c0;
+    --gold:     #8a6420;
+    --gold-dim: #b08030;
+    --cream:    #2c2416;
+    --muted:    #8a7d68;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--cream);
+    font-family: var(--font-body);
+    font-size: 15px;
+    line-height: 1.6;
+    min-height: 100vh;
+    padding: 32px 20px 80px;
+  }
+
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.5;
+  }
+
+  .theme-toggle {
+    position: fixed;
+    top: 12px; right: 12px;
+    z-index: 100;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 50%;
+    width: 32px; height: 32px;
+    font-size: 16px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    padding: 0;
+    opacity: 0.6;
+  }
+  .theme-toggle:hover { opacity: 1; border-color: var(--gold-dim); }
+
+  .container {
+    max-width: 680px;
+    margin: 0 auto;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* ── HEADER ── */
+  .header {
+    text-align: center;
+    margin-bottom: 40px;
+  }
+  .header-eyebrow {
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 10px;
+  }
+  .header h1 {
+    font-family: var(--font-display);
+    font-size: clamp(2.2rem, 6vw, 3.4rem);
+    font-style: italic;
+    color: var(--cream);
+    line-height: 1.1;
+  }
+  .header h1 span { color: var(--gold); }
+  .header-sub {
+    color: var(--muted);
+    font-size: 13px;
+    margin-top: 8px;
+    font-weight: 300;
+  }
+  .back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: var(--muted);
+    text-decoration: none;
+    margin-bottom: 32px;
+    transition: color 0.15s;
+  }
+  .back-link:hover { color: var(--gold); }
+
+  /* ── CARD ── */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px;
+    margin-bottom: 16px;
+  }
+  .card-title {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .card-title::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  /* ── GET IN TOUCH ── */
+  .contact-intro {
+    font-size: 14px;
+    color: var(--cream);
+    line-height: 1.7;
+    margin-bottom: 20px;
+    font-weight: 300;
+  }
+  .contact-intro strong { color: var(--gold); font-weight: 600; }
+  .email-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 11px 22px;
+    background: var(--gold);
+    color: #0d0d0f;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 600;
+    text-decoration: none;
+    font-family: var(--font-body);
+    transition: background 0.15s;
+    border: none;
+    cursor: pointer;
+  }
+  .email-btn:hover { background: #d4b05e; }
+
+  /* ── COMMENTS ── */
+  .comment-form { display: flex; flex-direction: column; gap: 10px; margin-bottom: 28px; }
+
+  .comment-inputs {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+  @media (max-width: 480px) { .comment-inputs { grid-template-columns: 1fr; } }
+
+  .comment-input, .comment-textarea {
+    padding: 10px 13px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--cream);
+    font-family: var(--font-body);
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.15s;
+    width: 100%;
+  }
+  .comment-input:focus, .comment-textarea:focus { border-color: var(--gold-dim); }
+  .comment-input::placeholder, .comment-textarea::placeholder { color: var(--muted); font-size: 13px; }
+
+  .comment-textarea {
+    resize: vertical;
+    min-height: 90px;
+    line-height: 1.5;
+  }
+
+  .comment-form-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .comment-hint {
+    font-size: 11px;
+    color: var(--muted);
+    font-weight: 300;
+  }
+  .username-shuffle {
+    background: none;
+    border: none;
+    color: var(--muted);
+    font-size: 11px;
+    cursor: pointer;
+    font-family: var(--font-body);
+    padding: 0;
+    text-decoration: underline;
+    transition: color 0.15s;
+  }
+  .username-shuffle:hover { color: var(--gold); }
+
+  .post-btn {
+    padding: 9px 20px;
+    background: var(--gold);
+    color: #0d0d0f;
+    border: none;
+    border-radius: 6px;
+    font-family: var(--font-body);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s;
+    white-space: nowrap;
+  }
+  .post-btn:hover { background: #d4b05e; }
+  .post-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  /* ── COMMENT LIST ── */
+  .comment-divider {
+    height: 1px;
+    background: var(--border);
+    margin-bottom: 20px;
+  }
+  .comment-list { display: flex; flex-direction: column; gap: 16px; }
+  .comment-item {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+  }
+  .comment-avatar {
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    flex-shrink: 0;
+    font-family: var(--font-display);
+    font-style: italic;
+    color: var(--gold);
+  }
+  .comment-body { flex: 1; min-width: 0; }
+  .comment-meta {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    margin-bottom: 4px;
+  }
+  .comment-username {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--cream);
+  }
+  .comment-time {
+    font-size: 11px;
+    color: var(--muted);
+    font-weight: 300;
+  }
+  .comment-text {
+    font-size: 14px;
+    color: var(--cream);
+    line-height: 1.6;
+    font-weight: 300;
+    word-break: break-word;
+  }
+  .comments-empty {
+    text-align: center;
+    padding: 32px 0;
+    color: var(--muted);
+    font-size: 14px;
+    font-weight: 300;
+  }
+  .comments-empty span {
+    display: block;
+    font-size: 28px;
+    margin-bottom: 8px;
+  }
+  .load-more-btn {
+    width: 100%;
+    margin-top: 16px;
+    padding: 10px;
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--muted);
+    font-family: var(--font-body);
+    font-size: 13px;
+    cursor: pointer;
+    transition: border-color 0.15s, color 0.15s;
+  }
+  .load-more-btn:hover { border-color: var(--gold-dim); color: var(--cream); }
+
+  /* ── TOAST ── */
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(60px);
+    background: var(--surface2);
+    border: 1px solid var(--gold-dim);
+    color: var(--gold);
+    padding: 9px 18px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 500;
+    transition: transform 0.3s ease;
+    z-index: 999;
+    pointer-events: none;
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+
+  /* ── FOOTER ── */
+  .footer-note {
+    text-align: center;
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 40px;
+    font-weight: 300;
+  }
+  .footer-note a { color: var(--gold-dim); text-decoration: none; }
+  .footer-note a:hover { color: var(--gold); }
+</style>
+</head>
+<body>
+
+<button class="theme-toggle" onclick="toggleTheme()" id="themeBtn" title="Toggle light/dark mode">☀️</button>
+
+<div class="container">
+
+  <a href="https://cinequiz.quest" class="back-link">← Back to CineQuiz</a>
+
+  <div class="header">
+    <div class="header-eyebrow">★ Know Your Friend ★</div>
+    <h1>Cine<span>Quiz</span></h1>
+    <div class="header-sub">contact & feedback</div>
+  </div>
+
+  <!-- GET IN TOUCH -->
+  <div class="card">
+    <div class="card-title">Get in Touch</div>
+    <p class="contact-intro">
+      Have questions, suggestions, or just want to say hi? We'd love to hear from you.<br>
+      <strong>Feature ideas, bug reports, quiz feedback</strong> — all welcome.
+    </p>
+    <a class="email-btn" href="mailto:cj@tuekssietch.fun">
+      <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6">
+        <rect x="1" y="3" width="14" height="10" rx="2"/>
+        <path d="M1 5l7 5 7-5"/>
+      </svg>
+      Email Us
+    </a>
+  </div>
+
+  <!-- COMMENTS -->
+  <div class="card">
+    <div class="card-title">Discussion</div>
+
+    <!-- Post form -->
+    <div class="comment-form">
+      <div class="comment-inputs">
+        <div>
+          <input class="comment-input" id="commentUsername" placeholder="Your name (or keep the fun one)" maxlength="40" autocomplete="off">
+          <button class="username-shuffle" onclick="shuffleUsername()" style="margin-top:4px;">🎲 shuffle name</button>
+        </div>
+        <div style="display:flex;align-items:flex-end;">
+          <div style="font-size:12px;color:var(--muted);font-weight:300;padding-bottom:6px;line-height:1.4;">
+            Posting anonymously — no account needed.<br>Be kind, be curious. 🎬
+          </div>
+        </div>
+      </div>
+      <textarea class="comment-textarea" id="commentText" placeholder="Share a thought, suggestion, or feedback…" maxlength="1000"></textarea>
+      <div class="comment-form-footer">
+        <div class="comment-hint" id="commentCharCount">0 / 1000</div>
+        <button class="post-btn" onclick="postComment()" id="postBtn">Post</button>
+      </div>
+    </div>
+
+    <div class="comment-divider"></div>
+
+    <div class="comment-list" id="commentList">
+      <div class="comments-empty" id="commentsEmpty">
+        <span>💬</span>
+        Loading discussion…
+      </div>
+    </div>
+
+    <button class="load-more-btn" id="loadMoreBtn" style="display:none;" onclick="loadComments(true)">Load more</button>
+  </div>
+
+  <div class="footer-note">
+    <a href="https://cinequiz.quest">cinequiz.quest</a>
+    &nbsp;·&nbsp; Built with ❤️ and too many late nights
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const WORKER_URL = "https://quiz-ai.cmcclea117.workers.dev";
+
+// ── THEME ──────────────────────────────────────────────────────────────
+function toggleTheme() {
+  const isLight = document.body.classList.toggle('light');
+  document.getElementById('themeBtn').textContent = isLight ? '🌙' : '☀️';
+  localStorage.setItem('cq-theme', isLight ? 'light' : 'dark');
+}
+(function() {
+  if (localStorage.getItem('cq-theme') === 'light') {
+    document.body.classList.add('light');
+    document.addEventListener('DOMContentLoaded', () => {
+      const btn = document.getElementById('themeBtn');
+      if (btn) btn.textContent = '🌙';
+    });
+  }
+})();
+
+// ── TOAST ─────────────────────────────────────────────────────────────
+function toast(msg) {
+  const t = document.getElementById("toast");
+  t.textContent = msg;
+  t.classList.add("show");
+  setTimeout(() => t.classList.remove("show"), 2400);
+}
+
+// ── USERNAME GENERATION ───────────────────────────────────────────────
+const ADJ = [
+  "Curious","Restless","Quiet","Bold","Dreamy","Witty","Earnest","Wry",
+  "Wandering","Steadfast","Pensive","Daring","Gentle","Sharp","Candid",
+  "Hopeful","Whimsical","Grounded","Vivid","Earnest","Wistful","Playful"
+];
+const NOUNS = [
+  "Cinephile","Watcher","Critic","Enthusiast","Explorer","Archivist",
+  "Wanderer","Thinker","Storyteller","Dreamer","Observer","Aficionado",
+  "Collector","Companion","Sleuth","Pilgrim","Maverick","Connoisseur"
+];
+
+function generateUsername() {
+  const adj  = ADJ[Math.floor(Math.random() * ADJ.length)];
+  const noun = NOUNS[Math.floor(Math.random() * NOUNS.length)];
+  const num  = Math.floor(Math.random() * 900) + 100;
+  return `${adj}${noun}${num}`;
+}
+
+function shuffleUsername() {
+  document.getElementById("commentUsername").value = generateUsername();
+}
+
+// ── CHARACTER COUNT ───────────────────────────────────────────────────
+document.addEventListener("DOMContentLoaded", () => {
+  const textarea = document.getElementById("commentText");
+  const counter  = document.getElementById("commentCharCount");
+  textarea.addEventListener("input", () => {
+    const len = textarea.value.length;
+    counter.textContent = `${len} / 1000`;
+    counter.style.color = len > 900 ? "var(--gold)" : "var(--muted)";
+  });
+
+  // Pre-fill a fun username
+  document.getElementById("commentUsername").value = generateUsername();
+
+  // Load comments
+  loadComments(false);
+});
+
+// ── COMMENTS ──────────────────────────────────────────────────────────
+let currentPage = 0;
+let hasMore = false;
+
+function timeAgo(ts) {
+  const diff = Date.now() - ts;
+  const mins  = Math.floor(diff / 60000);
+  const hours = Math.floor(diff / 3600000);
+  const days  = Math.floor(diff / 86400000);
+  if (mins < 1)  return "just now";
+  if (mins < 60) return `${mins}m ago`;
+  if (hours < 24) return `${hours}h ago`;
+  if (days < 7)  return `${days}d ago`;
+  return new Date(ts).toLocaleDateString("en-US", { month: "short", day: "numeric" });
+}
+
+function avatarLetter(username) {
+  return username?.charAt(0)?.toUpperCase() ?? "?";
+}
+
+function renderComment(c) {
+  const div = document.createElement("div");
+  div.className = "comment-item";
+  div.dataset.id = c.id;
+  div.innerHTML = `
+    <div class="comment-avatar">${avatarLetter(c.username)}</div>
+    <div class="comment-body">
+      <div class="comment-meta">
+        <span class="comment-username">${escHtml(c.username)}</span>
+        <span class="comment-time">${timeAgo(c.postedAt)}</span>
+      </div>
+      <div class="comment-text">${escHtml(c.text)}</div>
+    </div>`;
+  return div;
+}
+
+function escHtml(s) {
+  return String(s)
+    .replace(/&/g,"&amp;")
+    .replace(/</g,"&lt;")
+    .replace(/>/g,"&gt;")
+    .replace(/"/g,"&quot;");
+}
+
+async function loadComments(append = false) {
+  if (!append) currentPage = 0;
+  const btn   = document.getElementById("loadMoreBtn");
+  const list  = document.getElementById("commentList");
+  const empty = document.getElementById("commentsEmpty");
+
+  try {
+    const res  = await fetch(`${WORKER_URL}/comments?page=${currentPage}`);
+    const data = await res.json();
+    const comments = data.comments ?? [];
+
+    if (!append) list.innerHTML = "";
+
+    if (comments.length === 0 && !append) {
+      empty.style.display = "block";
+      empty.innerHTML = '<span>💬</span>No comments yet — be the first!';
+      btn.style.display = "none";
+      return;
+    }
+
+    empty.style.display = "none";
+    comments.forEach(c => list.appendChild(renderComment(c)));
+
+    // Show load more if we got a full page
+    hasMore = comments.length === 20;
+    btn.style.display = hasMore ? "block" : "none";
+    if (append) currentPage++;
+
+  } catch(e) {
+    if (!append) {
+      empty.style.display = "block";
+      empty.innerHTML = '<span>⚠️</span>Could not load comments.';
+    }
+  }
+}
+
+async function postComment() {
+  const text     = document.getElementById("commentText").value.trim();
+  const username = document.getElementById("commentUsername").value.trim() || generateUsername();
+  const btn      = document.getElementById("postBtn");
+
+  if (!text) { toast("Write something first!"); return; }
+
+  btn.disabled = true;
+  btn.textContent = "Posting…";
+
+  try {
+    const res  = await fetch(`${WORKER_URL}/comments`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text, username })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error ?? "Post failed");
+
+    // Prepend new comment to list
+    const list  = document.getElementById("commentList");
+    const empty = document.getElementById("commentsEmpty");
+    empty.style.display = "none";
+    list.insertBefore(renderComment(data.comment), list.firstChild);
+
+    // Clear form
+    document.getElementById("commentText").value = "";
+    document.getElementById("commentCharCount").textContent = "0 / 1000";
+    // Fresh username for next post
+    document.getElementById("commentUsername").value = generateUsername();
+
+    toast("Comment posted!");
+  } catch(e) {
+    toast(`Failed: ${e.message}`);
+  }
+
+  btn.disabled = false;
+  btn.textContent = "Post";
+}
+</script>
+</body>
+</html>
